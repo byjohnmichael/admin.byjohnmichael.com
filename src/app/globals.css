@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0b0d12;
+  --panel: #12151c;
+  --panel-border: #232733;
+  --ink: #e8eaf0;
+  --ink-dim: #8b93a7;
+  --accent: #6ee7b7;
+  --accent-dim: #34d399;
+  --danger: #f87171;
+  --danger-dim: #ef4444;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-border: var(--panel-border);
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-accent: var(--accent);
+  --color-accent-dim: var(--accent-dim);
+  --color-danger: var(--danger);
+  --color-danger-dim: var(--danger-dim);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.panel {
+  background-color: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 0.75rem;
+}
+
+.btn {
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: opacity 0.15s ease;
+}
+
+.btn:hover {
+  opacity: 0.85;
+}
+
+.btn-accent {
+  background-color: var(--accent);
+  color: #06251a;
+}
+
+.btn-danger {
+  background-color: var(--danger);
+  color: #2a0a0a;
+}
+
+.btn-ghost {
+  background-color: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--ink);
+}
+
+.input {
+  background-color: #0e1117;
+  border: 1px solid var(--panel-border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  color: var(--ink);
+}
+
+.input:focus {
+  outline: 2px solid var(--accent-dim);
+  outline-offset: 1px;
+}
