@@ -44,3 +44,5 @@ export async function POST(request: Request) {
   await removeWhitelistRequest(id);
   return NextResponse.json({ ok: true });
 }
+
+// byjohnmichael*

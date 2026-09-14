@@ -25,3 +25,5 @@ export function whitelistAddSucceeded(rconResponse: string): boolean {
   const lower = rconResponse.toLowerCase();
   return lower.startsWith("added") || lower.includes("already whitelisted");
 }
+
+// byjohnmichael*

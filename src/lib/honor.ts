@@ -34,3 +34,5 @@ export function computeHonor({
   const honor = (level + playtimeBonus - deathPenalty) * medalMultiplier;
   return Math.round(honor * 10) / 10;
 }
+
+// byjohnmichael*

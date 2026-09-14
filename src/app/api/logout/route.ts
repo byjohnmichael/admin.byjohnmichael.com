@@ -6,3 +6,5 @@ export async function POST() {
   response.cookies.delete(SESSION_COOKIE);
   return response;
 }
+
+// byjohnmichael*

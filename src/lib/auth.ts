@@ -48,3 +48,5 @@ export function checkPassword(candidate: string): boolean {
   const b = Buffer.from(expected);
   return a.length === b.length && timingSafeEqual(a, b);
 }
+
+// byjohnmichael*

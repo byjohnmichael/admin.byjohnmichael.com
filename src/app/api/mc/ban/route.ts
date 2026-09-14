@@ -18,3 +18,5 @@ export async function POST(request: Request) {
   await runRcon([action === "ban" ? "ban" : "pardon", username]);
   return NextResponse.json({ ok: true, banned: action === "ban" });
 }
+
+// byjohnmichael*

@@ -18,3 +18,5 @@ export async function POST(request: Request) {
   const medals = await adjustMedals(username, delta);
   return NextResponse.json({ medals });
 }
+
+// byjohnmichael*
