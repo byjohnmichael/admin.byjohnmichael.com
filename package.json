@@ -9,10 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "bob-the-orb": "file:../bob-the-orb",
     "next": "16.3.3",
+    "prismarine-nbt": "^2.8.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "prismarine-nbt": "^2.8.0"
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
