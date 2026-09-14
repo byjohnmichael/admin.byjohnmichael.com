@@ -1,15 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0b0d12;
-  --panel: #12151c;
-  --panel-border: #232733;
-  --ink: #e8eaf0;
-  --ink-dim: #8b93a7;
-  --accent: #6ee7b7;
-  --accent-dim: #34d399;
-  --danger: #f87171;
-  --danger-dim: #ef4444;
+  --bg: #000000;
+  --panel: #100e13;
+  --panel-border: #33222f;
+  --ink: #ece7ec;
+  --ink-dim: #928692;
+  /* signature dark red — brand / ok / active */
+  --accent: #e01e37;
+  --accent-dim: #9e1226;
+  /* brighter, hotter red — alerts / destructive / failures */
+  --danger: #ff5470;
+  --danger-dim: #e0223c;
 }
 
 @theme inline {
@@ -31,6 +33,13 @@ body {
 
 body {
   background-color: var(--bg);
+  /* barely-there red haze at the very top, otherwise pure black */
+  background-image: radial-gradient(
+    100% 55% at 50% 0%,
+    #130910 0%,
+    var(--bg) 45%
+  );
+  background-attachment: fixed;
   color: var(--ink);
   font-family:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -39,29 +48,40 @@ body {
 .panel {
   background-color: var(--panel);
   border: 1px solid var(--panel-border);
-  border-radius: 0.75rem;
+  border-radius: 0.25rem;
 }
 
 .btn {
-  border-radius: 0.5rem;
+  border-radius: 0.1875rem;
   padding: 0.5rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 600;
-  transition: opacity 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .btn:hover {
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .btn-accent {
   background-color: var(--accent);
-  color: #06251a;
+  color: #fff0f2;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 90, 110, 0.35),
+    0 4px 20px -10px rgba(224, 30, 55, 0.7);
+}
+
+.btn-accent:hover {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 90, 110, 0.5),
+    0 4px 24px -8px rgba(224, 30, 55, 0.85);
 }
 
 .btn-danger {
   background-color: var(--danger);
-  color: #2a0a0a;
+  color: #2c0410;
 }
 
 .btn-ghost {
@@ -70,15 +90,195 @@ body {
   color: var(--ink);
 }
 
+.btn-ghost:hover {
+  border-color: var(--accent-dim);
+}
+
 .input {
-  background-color: #0e1117;
+  background-color: #0c0b0f;
   border: 1px solid var(--panel-border);
-  border-radius: 0.5rem;
+  border-radius: 0.1875rem;
   padding: 0.5rem 0.75rem;
   color: var(--ink);
 }
 
 .input:focus {
-  outline: 2px solid var(--accent-dim);
+  outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
+
+/* CPU status orb — a small living sphere whose colour mix tracks CPU load,
+   heat and throttling. It always breathes; the blobs inside drift on their
+   own slow cycles so it never sits still. */
+@keyframes cpuOrbBreathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
+}
+@keyframes cpuOrbDriftA {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  30% {
+    translate: 3px -4px;
+  }
+  60% {
+    translate: -4px 3px;
+  }
+}
+@keyframes cpuOrbDriftB {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  35% {
+    translate: -4px -3px;
+  }
+  70% {
+    translate: 3px 4px;
+  }
+}
+.cpu-orb {
+  animation: cpuOrbBreathe var(--orb-dur, 6s) ease-in-out infinite;
+}
+.cpu-orb-blob-a {
+  animation: cpuOrbDriftA 8.5s ease-in-out infinite;
+}
+.cpu-orb-blob-b {
+  animation: cpuOrbDriftB 11.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cpu-orb,
+  .cpu-orb-blob-a,
+  .cpu-orb-blob-b {
+    animation: none;
+  }
+}
+
+/* The CPU panel runs its own lighter neon-blue accent, scoped so the rest of
+   the UI keeps the red theme. Overriding --accent / --panel-border here
+   cascades to text-accent, borders, dividers and the graph grid inside it. */
+.cpu-section {
+  --accent: #4ac8ff;
+  --accent-dim: #1c9fdd;
+  --panel-border: #1b3646;
+}
+.cpu-section.panel {
+  background-image: radial-gradient(
+    130% 90% at 50% -12%,
+    rgba(74, 200, 255, 0.07),
+    transparent 55%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(74, 200, 255, 0.1),
+    0 0 46px -20px rgba(74, 200, 255, 0.4);
+}
+
+/* RAM panel — its own lighter neon-orange accent, scoped the same way. */
+.ram-section {
+  --accent: #ff9e57;
+  --accent-dim: #e07a1f;
+  --panel-border: #4a3320;
+}
+.ram-section.panel {
+  background-image: radial-gradient(
+    130% 90% at 50% -12%,
+    rgba(255, 158, 87, 0.07),
+    transparent 55%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 158, 87, 0.1),
+    0 0 46px -20px rgba(255, 158, 87, 0.4);
+}
+
+/* SSD panel — its own lighter neon-red accent, scoped the same way. */
+.ssd-section {
+  --accent: #ff5c72;
+  --accent-dim: #e0293f;
+  --panel-border: #4a2028;
+}
+.ssd-section.panel {
+  background-image: radial-gradient(
+    130% 90% at 50% -12%,
+    rgba(255, 92, 114, 0.07),
+    transparent 55%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 92, 114, 0.1),
+    0 0 46px -20px rgba(255, 92, 114, 0.4);
+}
+
+/* GPU panel — its own lighter neon-green accent, scoped the same way. */
+.gpu-section {
+  --accent: #5ef08a;
+  --accent-dim: #23c765;
+  --panel-border: #1e4530;
+}
+.gpu-section.panel {
+  background-image: radial-gradient(
+    130% 90% at 50% -12%,
+    rgba(94, 240, 138, 0.07),
+    transparent 55%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(94, 240, 138, 0.1),
+    0 0 46px -20px rgba(94, 240, 138, 0.4);
+}
+
+/* PSU / system-power panel — its own lighter neon-yellow accent. */
+.psu-section {
+  --accent: #ffe14d;
+  --accent-dim: #e0bd1f;
+  --panel-border: #4a4320;
+}
+.psu-section.panel {
+  background-image: radial-gradient(
+    130% 90% at 50% -12%,
+    rgba(255, 225, 77, 0.07),
+    transparent 55%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 225, 77, 0.1),
+    0 0 46px -20px rgba(255, 225, 77, 0.4);
+}
+
+/* NET panel — its own lighter neon-purple accent. */
+.net-section {
+  --accent: #c08cff;
+  --accent-dim: #9a5cf0;
+  --panel-border: #392a4d;
+}
+.net-section.panel {
+  background-image: radial-gradient(
+    130% 90% at 50% -12%,
+    rgba(192, 140, 255, 0.07),
+    transparent 55%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(192, 140, 255, 0.1),
+    0 0 46px -20px rgba(192, 140, 255, 0.4);
+}
+
+/* OS panel — its own lighter neon-pink accent. */
+.os-section {
+  --accent: #ff8ac4;
+  --accent-dim: #e0559b;
+  --panel-border: #4a2a3c;
+}
+.os-section.panel {
+  background-image: radial-gradient(
+    130% 90% at 50% -12%,
+    rgba(255, 138, 196, 0.07),
+    transparent 55%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 138, 196, 0.1),
+    0 0 46px -20px rgba(255, 138, 196, 0.4);
+}
+
+/* byjohnmichael* */

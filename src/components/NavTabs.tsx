@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/", label: "General" },
+  { href: "/performance", label: "Performance" },
   { href: "/mc", label: "Minecraft" },
   { href: "/wow", label: "WoW" },
 ];
@@ -21,9 +22,9 @@ export default function NavTabs() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+            className={`rounded-sm px-3 py-2 text-sm font-medium transition-colors ${
               active
-                ? "bg-panel-border text-ink"
+                ? "bg-accent/15 text-ink ring-1 ring-inset ring-accent/40"
                 : "text-ink-dim hover:text-ink"
             }`}
           >
@@ -34,3 +35,5 @@ export default function NavTabs() {
     </nav>
   );
 }
+
+// byjohnmichael*

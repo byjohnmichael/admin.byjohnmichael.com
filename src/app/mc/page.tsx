@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 
 const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,16}$/;
 
@@ -90,6 +90,19 @@ const LOCATION_TYPE_OPTIONS: { value: LocationType; label: string }[] = [
   { value: "mountain", label: "Mountain" },
 ];
 
+type Trailer = {
+  episode: number;
+  fileName: string;
+  videoBytes: number;
+  posterFileName: string | null;
+  updatedAt: string;
+};
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default function McPage() {
   const [players, setPlayers] = useState<Player[] | null>(null);
   const [requests, setRequests] = useState<WhitelistRequest[] | null>(null);
@@ -108,6 +121,13 @@ export default function McPage() {
     Record<string, LocationDraft>
   >({});
   const [locationMessage, setLocationMessage] = useState("");
+  const [trailers, setTrailers] = useState<Trailer[] | null>(null);
+  const [nextEpisode, setNextEpisode] = useState<number | null>(null);
+  const [episodeOverride, setEpisodeOverride] = useState("");
+  const [trailerMessage, setTrailerMessage] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const posterInputRef = useRef<HTMLInputElement>(null);
 
   const loadPlayers = useCallback(() => {
     fetch("/api/mc/players")
@@ -156,12 +176,22 @@ export default function McPage() {
       });
   }, []);
 
+  const loadTrailers = useCallback(() => {
+    fetch("/api/mc/trailers")
+      .then((r) => r.json())
+      .then((data) => {
+        setTrailers(data.trailers ?? []);
+        setNextEpisode(data.nextEpisode ?? null);
+      });
+  }, []);
+
   useEffect(() => {
     loadPlayers();
     loadRequests();
     loadMarkers();
     loadLocationRequests();
-  }, [loadPlayers, loadRequests, loadMarkers, loadLocationRequests]);
+    loadTrailers();
+  }, [loadPlayers, loadRequests, loadMarkers, loadLocationRequests, loadTrailers]);
 
   async function adjustMedals(username: string, delta: number) {
     setBusy(`medals:${username}`);
@@ -289,6 +319,67 @@ export default function McPage() {
       setMarkerMessage(data.error ?? "Failed to apply markers.");
     }
     setBusy(null);
+  }
+
+  async function uploadTrailer(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setTrailerMessage("");
+
+    const videoFile = videoInputRef.current?.files?.[0];
+    if (!videoFile) {
+      setTrailerMessage("Choose an .mp4 file to upload.");
+      return;
+    }
+
+    const targetEpisode =
+      episodeOverride.trim() !== "" ? Number(episodeOverride) : nextEpisode;
+    if (!targetEpisode || !Number.isInteger(targetEpisode) || targetEpisode < 1) {
+      setTrailerMessage("Episode number must be a positive whole number.");
+      return;
+    }
+
+    const existing = trailers?.find((t) => t.episode === targetEpisode);
+    if (
+      existing &&
+      !window.confirm(
+        `Episode ${targetEpisode} already has a trailer uploaded. Replace it?`,
+      )
+    ) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("episode", String(targetEpisode));
+    formData.append("video", videoFile);
+    const posterFile = posterInputRef.current?.files?.[0];
+    if (posterFile) formData.append("poster", posterFile);
+
+    setUploading(true);
+    const response = await fetch("/api/mc/trailers", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (response.ok) {
+      setTrailers(data.trailers ?? []);
+      setEpisodeOverride("");
+      if (videoInputRef.current) videoInputRef.current.value = "";
+      if (posterInputRef.current) posterInputRef.current.value = "";
+      const highest = (data.trailers as Trailer[] | undefined)?.reduce(
+        (max: number, t: Trailer) => Math.max(max, t.episode),
+        0,
+      );
+      setTrailerMessage(
+        `Episode ${targetEpisode} uploaded${
+          highest === targetEpisode ? " — now the latest on the site." : "."
+        }`,
+      );
+      loadTrailers();
+    } else {
+      setTrailerMessage(data.error ?? "Failed to upload trailer.");
+    }
+    setUploading(false);
   }
 
   function updateLocationDraft(id: string, patch: Partial<LocationDraft>) {
@@ -815,6 +906,130 @@ export default function McPage() {
           </div>
         )}
       </section>
+
+      <section className="panel p-6">
+        <h2 className="mb-1 text-base font-semibold">
+          Minecraft Monday trailers
+        </h2>
+        <p className="mb-4 text-xs text-ink-dim">
+          Upload an episode&apos;s trailer .mp4. It&apos;s copied into the
+          mc.byjohnmichael.com media folder as the next episode number and
+          becomes the latest trailer shown on the homepage automatically.
+        </p>
+
+        <form
+          onSubmit={uploadTrailer}
+          className="mb-6 grid gap-3 border-b border-panel-border/60 pb-6 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-ink-dim">Episode number</span>
+            <input
+              type="number"
+              min={1}
+              step={1}
+              value={episodeOverride}
+              onChange={(e) => setEpisodeOverride(e.target.value)}
+              placeholder={nextEpisode ? String(nextEpisode) : "…"}
+              className="input"
+            />
+          </label>
+          <label className="flex flex-col gap-1 sm:col-span-1">
+            <span className="text-xs text-ink-dim">Trailer video (.mp4)</span>
+            <input
+              ref={videoInputRef}
+              type="file"
+              accept="video/mp4,.mp4"
+              required
+              className="input"
+            />
+          </label>
+          <label className="flex flex-col gap-1 sm:col-span-1">
+            <span className="text-xs text-ink-dim">
+              Poster image (optional)
+            </span>
+            <input
+              ref={posterInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="input"
+            />
+          </label>
+          <div className="flex items-end gap-3 sm:col-span-2 lg:col-span-1">
+            <button type="submit" disabled={uploading} className="btn btn-accent">
+              {uploading ? "Uploading…" : "Upload & publish"}
+            </button>
+          </div>
+          {trailerMessage && (
+            <p className="text-xs text-ink-dim sm:col-span-2 lg:col-span-4">
+              {trailerMessage}
+            </p>
+          )}
+        </form>
+
+        {trailers === null ? (
+          <p className="text-sm text-ink-dim">Loading...</p>
+        ) : trailers.length === 0 ? (
+          <p className="text-sm text-ink-dim">No trailers uploaded yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-panel-border text-ink-dim">
+                  <th className="py-2 pr-4 font-medium">Episode</th>
+                  <th className="py-2 pr-4 font-medium">File</th>
+                  <th className="py-2 pr-4 font-medium">Size</th>
+                  <th className="py-2 pr-4 font-medium">Poster</th>
+                  <th className="py-2 pr-4 font-medium">Updated</th>
+                  <th className="py-2 pr-4 font-medium" />
+                </tr>
+              </thead>
+              <tbody>
+                {[...trailers]
+                  .sort((a, b) => b.episode - a.episode)
+                  .map((trailer, i) => (
+                    <tr
+                      key={trailer.episode}
+                      className="border-b border-panel-border/60"
+                    >
+                      <td className="py-3 pr-4 tabular-nums">
+                        {trailer.episode}
+                        {i === 0 && (
+                          <span className="ml-2 rounded bg-accent/20 px-2 py-0.5 text-xs font-medium text-accent">
+                            latest
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4">{trailer.fileName}</td>
+                      <td className="py-3 pr-4 tabular-nums">
+                        {formatBytes(trailer.videoBytes)}
+                      </td>
+                      <td className="py-3 pr-4">
+                        {trailer.posterFileName ?? (
+                          <span className="text-ink-dim">none</span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4 text-ink-dim">
+                        {new Date(trailer.updatedAt).toLocaleString()}
+                      </td>
+                      <td className="py-3 pr-4">
+                        <a
+                          className="btn btn-ghost"
+                          href={`https://mc.byjohnmichael.com/trailers/${trailer.episode}`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          View
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
+
+// byjohnmichael*
