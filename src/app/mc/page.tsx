@@ -22,7 +22,16 @@ type WhitelistRequest = {
 };
 
 type MarkerDimension = "overworld" | "nether" | "end";
-type MarkerIcon = "pin" | "home" | "kingdom" | "town" | "mountain";
+type MarkerIcon =
+  | "pin"
+  | "home"
+  | "kingdom"
+  | "town"
+  | "mountain"
+  | "landmark"
+  | "river"
+  | "sea"
+  | "ruins";
 
 type Marker = {
   id: string;
@@ -47,6 +56,10 @@ const MARKER_ICONS: { value: MarkerIcon; label: string }[] = [
   { value: "kingdom", label: "Kingdom" },
   { value: "town", label: "Town" },
   { value: "mountain", label: "Mountain" },
+  { value: "landmark", label: "Landmark" },
+  { value: "river", label: "River" },
+  { value: "sea", label: "Sea" },
+  { value: "ruins", label: "Ruins" },
 ];
 
 const BLANK_MARKER_FORM = {
@@ -59,7 +72,15 @@ const BLANK_MARKER_FORM = {
   detail: "",
 };
 
-type LocationType = "landmark" | "home" | "town" | "kingdom" | "mountain";
+type LocationType =
+  | "landmark"
+  | "home"
+  | "town"
+  | "kingdom"
+  | "mountain"
+  | "river"
+  | "sea"
+  | "ruins";
 
 type LocationRequest = {
   id: string;
@@ -88,7 +109,33 @@ const LOCATION_TYPE_OPTIONS: { value: LocationType; label: string }[] = [
   { value: "town", label: "Town" },
   { value: "kingdom", label: "Kingdom" },
   { value: "mountain", label: "Mountain" },
+  { value: "river", label: "River" },
+  { value: "sea", label: "Sea" },
+  { value: "ruins", label: "Ruins" },
 ];
+
+type BorderPoint = { x: number; z: number };
+
+type Border = {
+  id: string;
+  name: string;
+  dimension: MarkerDimension;
+  color: string;
+  points: BorderPoint[];
+};
+
+type BorderPointDraft = { x: string; z: string };
+
+const BLANK_BORDER_FORM = {
+  name: "",
+  dimension: "overworld" as MarkerDimension,
+  color: "#ff3b30",
+  points: [
+    { x: "", z: "" },
+    { x: "", z: "" },
+    { x: "", z: "" },
+  ] as BorderPointDraft[],
+};
 
 type Trailer = {
   episode: number;
@@ -114,6 +161,12 @@ export default function McPage() {
   const [markersDirty, setMarkersDirty] = useState(false);
   const [markerForm, setMarkerForm] = useState(BLANK_MARKER_FORM);
   const [markerMessage, setMarkerMessage] = useState("");
+  const [borders, setBorders] = useState<Border[] | null>(null);
+  const [bordersDirty, setBordersDirty] = useState(false);
+  const [borderForm, setBorderForm] = useState(BLANK_BORDER_FORM);
+  const [borderMessage, setBorderMessage] = useState("");
+  const [drawMode, setDrawMode] = useState(false);
+  const mapProxyRef = useRef<HTMLIFrameElement>(null);
   const [locationRequests, setLocationRequests] = useState<
     LocationRequest[] | null
   >(null);
@@ -147,6 +200,15 @@ export default function McPage() {
       .then((data) => {
         setMarkers(data.markers ?? []);
         setMarkersDirty(Boolean(data.dirty));
+      });
+  }, []);
+
+  const loadBorders = useCallback(() => {
+    fetch("/api/mc/borders")
+      .then((r) => r.json())
+      .then((data) => {
+        setBorders(data.borders ?? []);
+        setBordersDirty(Boolean(data.dirty));
       });
   }, []);
 
@@ -189,9 +251,33 @@ export default function McPage() {
     loadPlayers();
     loadRequests();
     loadMarkers();
+    loadBorders();
     loadLocationRequests();
     loadTrailers();
-  }, [loadPlayers, loadRequests, loadMarkers, loadLocationRequests, loadTrailers]);
+  }, [
+    loadPlayers,
+    loadRequests,
+    loadMarkers,
+    loadBorders,
+    loadLocationRequests,
+    loadTrailers,
+  ]);
+
+  useEffect(() => {
+    function handleMapMessage(event: MessageEvent) {
+      if (event.origin !== window.location.origin) return;
+      const data = event.data;
+      if (!data || data.source !== "bluemap-draw-tool" || data.type !== "point") {
+        return;
+      }
+      setBorderForm((prev) => ({
+        ...prev,
+        points: [...prev.points, { x: String(data.x), z: String(data.z) }],
+      }));
+    }
+    window.addEventListener("message", handleMapMessage);
+    return () => window.removeEventListener("message", handleMapMessage);
+  }, []);
 
   async function adjustMedals(username: string, delta: number) {
     setBusy(`medals:${username}`);
@@ -317,6 +403,93 @@ export default function McPage() {
       );
     } else {
       setMarkerMessage(data.error ?? "Failed to apply markers.");
+    }
+    setBusy(null);
+  }
+
+  function updateBorderPoint(index: number, patch: Partial<BorderPointDraft>) {
+    setBorderForm((prev) => ({
+      ...prev,
+      points: prev.points.map((p, i) => (i === index ? { ...p, ...patch } : p)),
+    }));
+  }
+
+  function addBorderPointRow() {
+    setBorderForm((prev) => ({
+      ...prev,
+      points: [...prev.points, { x: "", z: "" }],
+    }));
+  }
+
+  function removeBorderPointRow(index: number) {
+    setBorderForm((prev) => ({
+      ...prev,
+      points: prev.points.filter((_, i) => i !== index),
+    }));
+  }
+
+  async function addBorderFromForm(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBorderMessage("");
+    setBusy("border-add");
+    const response = await fetch("/api/mc/borders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "add",
+        name: borderForm.name.trim(),
+        dimension: borderForm.dimension,
+        color: borderForm.color,
+        points: borderForm.points.map((p) => ({
+          x: Number(p.x),
+          z: Number(p.z),
+        })),
+      }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (response.ok) {
+      setBorders(data.borders ?? []);
+      setBordersDirty(Boolean(data.dirty));
+      setBorderForm({
+        ...BLANK_BORDER_FORM,
+        points: BLANK_BORDER_FORM.points.map((p) => ({ ...p })),
+      });
+    } else {
+      setBorderMessage(data.error ?? "Failed to add border.");
+    }
+    setBusy(null);
+  }
+
+  async function removeBorder(id: string) {
+    setBusy(`border:${id}`);
+    const response = await fetch("/api/mc/borders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", id }),
+    });
+    const data = await response.json().catch(() => ({}));
+    setBorders(data.borders ?? []);
+    setBordersDirty(Boolean(data.dirty));
+    setBusy(null);
+  }
+
+  async function applyBordersToMap() {
+    setBorderMessage("");
+    setBusy("border-apply");
+    const response = await fetch("/api/mc/borders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "apply" }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (response.ok) {
+      setBorders(data.borders ?? []);
+      setBordersDirty(Boolean(data.dirty));
+      setBorderMessage(
+        "Applied. BlueMap is reloading — borders appear in a few seconds.",
+      );
+    } else {
+      setBorderMessage(data.error ?? "Failed to apply borders.");
     }
     setBusy(null);
   }
@@ -895,6 +1068,206 @@ export default function McPage() {
                         className="btn btn-danger"
                         disabled={busy === `marker:${marker.id}`}
                         onClick={() => removeMarker(marker.id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="panel p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-semibold">
+            Map borders
+            {bordersDirty && (
+              <span className="ml-2 rounded bg-danger/20 px-2 py-0.5 text-xs font-medium text-danger">
+                unapplied changes
+              </span>
+            )}
+          </h2>
+          <button
+            className="btn btn-accent"
+            disabled={!bordersDirty || busy === "border-apply"}
+            onClick={applyBordersToMap}
+          >
+            {busy === "border-apply" ? "Applying..." : "Apply to map"}
+          </button>
+        </div>
+        <p className="mb-4 text-xs text-ink-dim">
+          Outlines a region with a colored border line (no fill), like a state
+          or kingdom boundary. Enter the X/Z corners of the outline in order
+          &mdash; you need at least 3 points.
+        </p>
+
+        <form
+          onSubmit={addBorderFromForm}
+          className="mb-6 flex flex-col gap-3 border-b border-panel-border/60 pb-6"
+        >
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="flex flex-col gap-1 sm:col-span-2">
+              <span className="text-xs text-ink-dim">Name</span>
+              <input
+                value={borderForm.name}
+                onChange={(e) =>
+                  setBorderForm({ ...borderForm, name: e.target.value })
+                }
+                maxLength={48}
+                required
+                className="input"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-ink-dim">Dimension</span>
+              <select
+                value={borderForm.dimension}
+                onChange={(e) =>
+                  setBorderForm({
+                    ...borderForm,
+                    dimension: e.target.value as MarkerDimension,
+                  })
+                }
+                className="input"
+              >
+                {MARKER_DIMENSIONS.map((d) => (
+                  <option key={d.value} value={d.value}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-ink-dim">Color</span>
+              <input
+                type="color"
+                value={borderForm.color}
+                onChange={(e) =>
+                  setBorderForm({ ...borderForm, color: e.target.value })
+                }
+                className="input h-[38px] p-1"
+              />
+            </label>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-ink-dim">Points (X, Z)</span>
+              <button
+                type="button"
+                className="btn btn-ghost px-2 py-1 text-xs"
+                onClick={() => setDrawMode((v) => !v)}
+              >
+                {drawMode ? "Hide map" : "Draw on map"}
+              </button>
+            </div>
+            {drawMode && (
+              <div className="flex flex-col gap-1">
+                <iframe
+                  ref={mapProxyRef}
+                  src="/api/mc/map-proxy/index.html"
+                  onLoad={() => {
+                    mapProxyRef.current?.contentWindow?.postMessage(
+                      { source: "admin-border-tool", type: "set-active", active: true },
+                      window.location.origin,
+                    );
+                  }}
+                  className="h-[420px] w-full rounded-lg border border-panel-border"
+                />
+                <p className="text-xs text-ink-dim">
+                  Click anywhere on the map to add a point below.
+                </p>
+              </div>
+            )}
+            {borderForm.points.map((point, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="number"
+                  placeholder="X"
+                  value={point.x}
+                  onChange={(e) => updateBorderPoint(i, { x: e.target.value })}
+                  required
+                  className="input w-28"
+                />
+                <input
+                  type="number"
+                  placeholder="Z"
+                  value={point.z}
+                  onChange={(e) => updateBorderPoint(i, { z: e.target.value })}
+                  required
+                  className="input w-28"
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost px-2 py-1"
+                  disabled={borderForm.points.length <= 3}
+                  onClick={() => removeBorderPointRow(i)}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="btn btn-ghost self-start"
+              onClick={addBorderPointRow}
+            >
+              + Add point
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={busy === "border-add"}
+              className="btn btn-accent"
+            >
+              {busy === "border-add" ? "Adding..." : "Add border"}
+            </button>
+            {borderMessage && (
+              <p className="text-xs text-ink-dim">{borderMessage}</p>
+            )}
+          </div>
+        </form>
+
+        {borders === null ? (
+          <p className="text-sm text-ink-dim">Loading...</p>
+        ) : borders.length === 0 ? (
+          <p className="text-sm text-ink-dim">No borders yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[480px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-panel-border text-ink-dim">
+                  <th className="py-2 pr-4 font-medium">Name</th>
+                  <th className="py-2 pr-4 font-medium">Dimension</th>
+                  <th className="py-2 pr-4 font-medium">Color</th>
+                  <th className="py-2 pr-4 font-medium">Points</th>
+                  <th className="py-2 pr-4 font-medium" />
+                </tr>
+              </thead>
+              <tbody>
+                {borders.map((border) => (
+                  <tr key={border.id} className="border-b border-panel-border/60">
+                    <td className="py-3 pr-4">{border.name}</td>
+                    <td className="py-3 pr-4 capitalize">{border.dimension}</td>
+                    <td className="py-3 pr-4">
+                      <span
+                        className="inline-block h-4 w-4 rounded-full border border-panel-border align-middle"
+                        style={{ backgroundColor: border.color }}
+                      />
+                    </td>
+                    <td className="py-3 pr-4 tabular-nums">
+                      {border.points.length}
+                    </td>
+                    <td className="py-3 pr-4">
+                      <button
+                        className="btn btn-danger"
+                        disabled={busy === `border:${border.id}`}
+                        onClick={() => removeBorder(border.id)}
                       >
                         Delete
                       </button>
