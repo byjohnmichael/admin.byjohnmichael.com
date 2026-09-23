@@ -23,6 +23,9 @@ export const ICONS = [
   "town",
   "mountain",
   "landmark",
+  "river",
+  "sea",
+  "ruins",
 ] as const;
 export type Icon = (typeof ICONS)[number];
 

@@ -73,6 +73,9 @@ export const LOCATION_TYPES = [
   "town",
   "kingdom",
   "mountain",
+  "river",
+  "sea",
+  "ruins",
 ] as const;
 export type LocationType = (typeof LOCATION_TYPES)[number];
 
