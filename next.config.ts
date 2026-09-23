@@ -4,7 +4,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Lets the dev server be tested from other devices on the LAN/Tailscale
   // instead of only localhost.
-  allowedDevOrigins: ["192.168.86.31", "100.88.192.72"],
+  allowedDevOrigins: [
+    "192.168.86.31",
+    "100.88.192.72",
+    "admin.byjohnmichael.com",
+  ],
   // bob-the-orb is a local sibling package (../bob-the-orb, installed via
   // "file:../bob-the-orb") — its node_modules entry is a symlink pointing
   // outside this project's own directory. Turbopack sandboxes resolution to
