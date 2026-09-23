@@ -1312,6 +1312,21 @@ function meanLast(nums: number[], n: number): number | null {
   return s.length ? s.reduce((a, b) => a + b, 0) / s.length : null;
 }
 
+/** Ceiling for a sparkline's Y-axis, robust to a single outlier sample: a
+ * plain Math.max over the window lets one bad instantaneous-rate reading
+ * dominate the scale and squash every other point to the baseline until
+ * that sample ages out of the window. Using the 98th percentile instead
+ * means one spike can't do that, while sustained highs still scale up. */
+function robustMax(floor: number, ...series: number[][]): number {
+  const values = series
+    .flat()
+    .filter((v) => Number.isFinite(v) && v >= 0)
+    .sort((a, b) => a - b);
+  if (values.length === 0) return floor;
+  const idx = Math.min(values.length - 1, Math.floor(values.length * 0.98));
+  return Math.max(floor, values[idx]);
+}
+
 type OrbState = {
   loadP: number;
   heatP: number;
@@ -2005,20 +2020,20 @@ export default function PerformancePage() {
       5,
     ) ??
     0;
-  const ssdGraphMax = Math.max(
+  const ssdGraphMax = robustMax(
     1,
-    ...ssdReadPoints.map((p) => p.v),
-    ...ssdWritePoints.map((p) => p.v),
+    ssdReadPoints.map((p) => p.v),
+    ssdWritePoints.map((p) => p.v),
   );
   const ssdOrb = deriveSsdOrb(s, h);
   const ssdAct = s.disk?.utilPct ?? 0;
   const netDownPoints = h.map((p) => ({ t: p.t, v: p.netRx }));
   const netUpPoints = h.map((p) => ({ t: p.t, v: p.netTx }));
   const netNow = s.net ? s.net.rxBps + s.net.txBps : 0;
-  const netGraphMax = Math.max(
+  const netGraphMax = robustMax(
     1024,
-    ...netDownPoints.map((p) => p.v),
-    ...netUpPoints.map((p) => p.v),
+    netDownPoints.map((p) => p.v),
+    netUpPoints.map((p) => p.v),
   );
   const netLinkBps = (meta?.net?.speedMbps ?? 0) * 125_000; // Mbps → bytes/s
   const netLinkPct = netLinkBps ? (netNow / netLinkBps) * 100 : 0;

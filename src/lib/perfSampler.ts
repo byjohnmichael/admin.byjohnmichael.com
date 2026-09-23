@@ -329,6 +329,7 @@ type SamplerState = {
   timer: ReturnType<typeof setInterval> | null;
   priming: Promise<void> | null;
   lastError: string | null;
+  busy: boolean;
 };
 
 /* --------------------------------------------------- process-wide singleton */
@@ -354,6 +355,7 @@ const state: SamplerState =
     timer: null,
     priming: null,
     lastError: null,
+    busy: false,
   });
 
 /* ------------------------------------------------------------ small helpers */
@@ -1666,6 +1668,15 @@ function computeSnapshot(prev: Raw, cur: Raw): PerfSnapshot {
 }
 
 async function tick(): Promise<void> {
+  // A "slow" tick (sensors/nvidia-smi/smartctl calls, every SENSORS_EVERY
+  // ticks) can take longer than TICK_MS. Without this guard, setInterval
+  // fires a second, overlapping tick() that reads/writes state.prev out of
+  // order - producing a near-zero dt between two Raw samples and, since
+  // readBps/writeBps divide a normal counter delta by that near-zero dt, a
+  // single wildly-oversized rate sample that spikes the graph until it ages
+  // out of the history window.
+  if (state.busy) return;
+  state.busy = true;
   try {
     if (!state.meta) state.meta = await buildMeta();
     if (state.tick % CONTAINERS_EVERY === 0 || !state.containerDirs.length) {
@@ -1681,6 +1692,8 @@ async function tick(): Promise<void> {
     state.lastError = null;
   } catch (err) {
     state.lastError = (err as Error).message ?? String(err);
+  } finally {
+    state.busy = false;
   }
 }
 
