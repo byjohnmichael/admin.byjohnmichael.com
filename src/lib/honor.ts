@@ -1,15 +1,21 @@
 /**
  * Honor blends four signals:
  *
- *   level        the baseline
- *   hoursPlayed  a small, uncapped bonus whose weight fades 0.5%/level
- *                (never below 50%) — acts as a floor for players who have
- *                lost levels, and only a light boost for high levels
- *   deaths       a penalty capped at level/8, so low-level players are
- *                barely affected and nobody gets wiped out by a big count
- *   medals       a modest multiplier, no hard cap (sqrt keeps it in check)
+ *   level        the baseline, but grindable — sqrt-scaled so a huge level
+ *                gap (e.g. 300 vs 30) only becomes a ~3x baseline gap,
+ *                leaving room for medals to overturn it
+ *   hoursPlayed  a log-scaled safety net: matters most at low level, fades
+ *                toward a floor as level climbs, so it mainly protects
+ *                someone whose level dropped (lost XP on death) despite
+ *                having clearly put in the time
+ *   medals       rare, hand-awarded, and meant to be the dominant lever —
+ *                a linear multiplier strong enough that a handful of
+ *                medals can put a low-level player ahead of a pure grinder
+ *   deaths       a percentage penalty (not a flat subtraction) whose rate
+ *                grows with level — near-zero at low level (everyone dies
+ *                learning the game), meaningful for a high-level veteran
  *
- *   honor = (level + playtimeBonus - deathPenalty) * medalMultiplier
+ *   honor = (levelBaseline + hoursBonus) * medalMultiplier * deathFactor
  */
 export function computeHonor({
   level,
@@ -22,16 +28,21 @@ export function computeHonor({
   deaths: number;
   hoursPlayed: number;
 }): number {
-  const rawPlaytime = 2 * Math.log10(1 + Math.max(0, hoursPlayed));
-  const playtimeScale = Math.max(0.5, 1 - 0.005 * Math.max(0, level));
-  const playtimeBonus = rawPlaytime * playtimeScale;
+  const lvl = Math.max(0, level);
+  const med = Math.max(0, medals);
+  const dth = Math.max(0, deaths);
+  const hrs = Math.max(0, hoursPlayed);
 
-  const deathCeiling = Math.max(0, level) / 8;
-  const deathPenalty = Math.min(Math.max(0, deaths) / 5, deathCeiling);
+  const levelBaseline = 5 * Math.sqrt(lvl);
 
-  const medalMultiplier = 1 + 0.07 * Math.sqrt(Math.max(0, medals));
+  const hoursFade = Math.max(0.3, 1 - 0.005 * lvl);
+  const hoursBonus = 4 * Math.log10(1 + hrs) * hoursFade;
 
-  const honor = (level + playtimeBonus - deathPenalty) * medalMultiplier;
+  const medalMultiplier = 1 + 0.6 * med;
+
+  const deathFactor = Math.max(0.3, 1 - dth * 0.006 * (lvl / 100));
+
+  const honor = (levelBaseline + hoursBonus) * medalMultiplier * deathFactor;
   return Math.round(honor * 10) / 10;
 }
 
