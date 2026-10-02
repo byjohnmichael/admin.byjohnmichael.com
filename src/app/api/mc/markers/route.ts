@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import {
   addMarker,
-  applyMarkers,
   deleteMarker,
+  updateMarker,
   listMarkers,
   DIMENSIONS,
   ICONS,
@@ -11,7 +11,6 @@ import {
 } from "@/lib/bluemapMarkers";
 
 const NAME_MAX = 48;
-const DETAIL_MAX = 200;
 const XZ_LIMIT = 30_000_000;
 const Y_MIN = -2048;
 const Y_MAX = 2048;
@@ -24,14 +23,6 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const action = body?.action;
 
-  if (action === "apply") {
-    const result = await applyMarkers();
-    if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: 502 });
-    }
-    return NextResponse.json(await listMarkers());
-  }
-
   if (action === "delete") {
     if (typeof body?.id !== "string" || !body.id) {
       return NextResponse.json({ error: "Invalid id." }, { status: 400 });
@@ -39,24 +30,20 @@ export async function POST(request: Request) {
     return NextResponse.json(await deleteMarker(body.id));
   }
 
-  if (action === "add") {
+  if (action === "add" || action === "edit") {
     const name = typeof body?.name === "string" ? body.name.trim() : "";
-    const detail = typeof body?.detail === "string" ? body.detail.trim() : "";
     const x = Number(body?.x);
     const y = Number(body?.y);
     const z = Number(body?.z);
     const dimension = body?.dimension as Dimension;
     const icon = body?.icon as Icon;
 
+    if (action === "edit" && (typeof body?.id !== "string" || !body.id)) {
+      return NextResponse.json({ error: "Invalid id." }, { status: 400 });
+    }
     if (!name || name.length > NAME_MAX) {
       return NextResponse.json(
         { error: `Name must be 1-${NAME_MAX} characters.` },
-        { status: 400 },
-      );
-    }
-    if (detail.length > DETAIL_MAX) {
-      return NextResponse.json(
-        { error: `Detail must be ${DETAIL_MAX} characters or fewer.` },
         { status: 400 },
       );
     }
@@ -79,8 +66,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid icon." }, { status: 400 });
     }
 
+    if (action === "edit") {
+      return NextResponse.json(
+        await updateMarker(body.id, { name, x, y, z, dimension, icon }),
+      );
+    }
     return NextResponse.json(
-      await addMarker({ name, detail, x, y, z, dimension, icon }),
+      await addMarker({ name, x, y, z, dimension, icon }),
     );
   }
 

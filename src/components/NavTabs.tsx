@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 
 const TABS = [
-  { href: "/", label: "general" },
+  { href: "/", label: "overview" },
   { href: "/performance", label: "performance" },
   { href: "/mc", label: "minecraft" },
   { href: "/wow", label: "wow" },

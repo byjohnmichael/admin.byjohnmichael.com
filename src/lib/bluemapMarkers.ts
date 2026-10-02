@@ -26,6 +26,7 @@ export const ICONS = [
   "river",
   "sea",
   "ruins",
+  "jungle",
 ] as const;
 export type Icon = (typeof ICONS)[number];
 
@@ -37,7 +38,6 @@ export type Marker = {
   z: number;
   dimension: Dimension;
   icon: Icon;
-  detail: string;
 };
 
 export type MarkerState = { markers: Marker[]; dirty: boolean };
@@ -84,21 +84,49 @@ export async function listMarkers(): Promise<MarkerState> {
   return readState();
 }
 
-export async function addMarker(input: Omit<Marker, "id">): Promise<MarkerState> {
+export type MutateResult = MarkerState & { applyError?: string };
+
+// Every add/delete immediately publishes to the live map — there's no
+// separate "apply" step for the admin to remember. If the publish itself
+// fails (e.g. bluemap reload can't reach RCON), the store is left dirty and
+// the error rides along so the caller can surface it; the next successful
+// mutation retries the publish automatically.
+async function mutateAndApply(
+  mutate: (state: MarkerState) => void,
+): Promise<MutateResult> {
   const state = await readState();
-  state.markers.push({ ...input, id: randomUUID() });
-  state.dirty = true;
+  mutate(state);
   await writeState(state);
-  return state;
+  const result = await applyMarkers();
+  const final = await readState();
+  return result.ok ? final : { ...final, applyError: result.error };
 }
 
-export async function deleteMarker(id: string): Promise<MarkerState> {
-  const state = await readState();
-  const before = state.markers.length;
-  state.markers = state.markers.filter((m) => m.id !== id);
-  if (state.markers.length !== before) state.dirty = true;
-  await writeState(state);
-  return state;
+export async function addMarker(input: Omit<Marker, "id">): Promise<MutateResult> {
+  return mutateAndApply((state) => {
+    state.markers.push({ ...input, id: randomUUID() });
+    state.dirty = true;
+  });
+}
+
+export async function deleteMarker(id: string): Promise<MutateResult> {
+  return mutateAndApply((state) => {
+    const before = state.markers.length;
+    state.markers = state.markers.filter((m) => m.id !== id);
+    if (state.markers.length !== before) state.dirty = true;
+  });
+}
+
+export async function updateMarker(
+  id: string,
+  input: Omit<Marker, "id">,
+): Promise<MutateResult> {
+  return mutateAndApply((state) => {
+    const marker = state.markers.find((m) => m.id === id);
+    if (!marker) return;
+    Object.assign(marker, input);
+    state.dirty = true;
+  });
 }
 
 /* ----------------------------------------------------- config generation --- */
@@ -113,8 +141,8 @@ function markerEntry(m: Marker): string {
     `        type: "poi"`,
     `        label: "${hocon(m.name)}"`,
     `        position: { x: ${m.x}, y: ${m.y}, z: ${m.z} }`,
+    `        detail: "${hocon(m.name)}"`,
   ];
-  if (m.detail.trim()) lines.push(`        detail: "${hocon(m.detail)}"`);
   if (m.icon !== "pin") {
     lines.push(`        icon: "assets/icon-${m.icon}.svg"`);
     lines.push(`        anchor: { x: 20, y: 20 }`);

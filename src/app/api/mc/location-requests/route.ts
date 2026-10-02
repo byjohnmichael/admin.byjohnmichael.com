@@ -12,7 +12,6 @@ import {
 } from "@/lib/bluemapMarkers";
 
 const NAME_MAX = 48;
-const DETAIL_MAX = 200;
 const XZ_LIMIT = 30_000_000;
 const Y_MIN = -2048;
 const Y_MAX = 2048;
@@ -37,7 +36,6 @@ export async function POST(request: Request) {
 
   if (action === "accept") {
     const name = typeof body?.name === "string" ? body.name.trim() : "";
-    const detail = typeof body?.detail === "string" ? body.detail.trim() : "";
     const x = Number(body?.x);
     const y = Number(body?.y);
     const z = Number(body?.z);
@@ -47,12 +45,6 @@ export async function POST(request: Request) {
     if (!name || name.length > NAME_MAX) {
       return NextResponse.json(
         { error: `Name must be 1-${NAME_MAX} characters.` },
-        { status: 400 },
-      );
-    }
-    if (detail.length > DETAIL_MAX) {
-      return NextResponse.json(
-        { error: `Detail must be ${DETAIL_MAX} characters or fewer.` },
         { status: 400 },
       );
     }
@@ -78,7 +70,6 @@ export async function POST(request: Request) {
     // A location's type doubles as its marker icon (icon-<type>.svg).
     const state = await addMarker({
       name,
-      detail,
       x,
       y,
       z,
@@ -91,6 +82,7 @@ export async function POST(request: Request) {
       requests: await getLocationRequests(),
       markers: state.markers,
       dirty: state.dirty,
+      applyError: state.applyError,
     });
   }
 
