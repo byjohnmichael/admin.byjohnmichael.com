@@ -15,7 +15,7 @@ export default function NavTabs() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-wrap gap-1">
+    <nav className="-mx-2 flex gap-0.5 overflow-x-auto whitespace-nowrap sm:mx-0 sm:gap-1">
       {TABS.map((tab) => {
         const active =
           tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
@@ -23,7 +23,7 @@ export default function NavTabs() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={`term-tab relative px-3 py-2 text-sm transition-colors ${
+            className={`term-tab relative shrink-0 px-2 py-2 text-[13px] transition-colors sm:px-3 sm:text-sm ${
               active ? "text-ink" : "text-ink-dim hover:text-ink"
             }`}
             data-active={active || undefined}

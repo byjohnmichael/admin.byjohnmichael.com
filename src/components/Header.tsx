@@ -22,8 +22,8 @@ export default function Header() {
     )?.cmd ?? "";
 
   return (
-    <header className="flex flex-wrap items-center gap-x-6 gap-y-3 border-b border-panel-border px-4 py-4 sm:px-6">
-      <span className="term-prompt max-w-full min-w-0 overflow-hidden text-sm text-ellipsis whitespace-nowrap">
+    <header className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-panel-border px-4 py-3 sm:px-6 sm:py-4">
+      <span className="term-prompt order-1 min-w-0 flex-1 overflow-hidden text-sm text-ellipsis whitespace-nowrap lg:flex-none">
         [<b>jm</b>@<em>byjohnmichael</em> ~]${" "}
         {/* keyed by route so the typing animation replays on navigation */}
         <span
@@ -35,8 +35,11 @@ export default function Header() {
         </span>
         <span className="term-cursor" aria-hidden />
       </span>
-      <NavTabs />
-      <div className="ml-auto">
+      {/* phones: nav drops to its own full-width row under the prompt */}
+      <div className="order-3 w-full lg:order-2 lg:w-auto">
+        <NavTabs />
+      </div>
+      <div className="order-2 ml-auto lg:order-3">
         <LogoutButton />
       </div>
     </header>

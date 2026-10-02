@@ -632,7 +632,7 @@ function HoverSparkline({
   return (
     <div
       ref={wrapRef}
-      className={`relative h-full min-h-[3rem] cursor-crosshair ${grid ? "border border-panel-border/70" : ""}`}
+      className={`relative h-full min-h-[3rem] flex-1 cursor-crosshair ${grid ? "border border-panel-border/70" : ""}`}
       onMouseMove={onMove}
       onMouseLeave={() => setHi(null)}
     >
@@ -1942,9 +1942,9 @@ export default function PerformancePage() {
         <div className="min-w-[280px] flex-1" style={{ height: 260 }}>
           <ChatPanel adapter={bobChatAdapter} />
         </div>
-        <div className="flex w-40 flex-col gap-2" style={{ height: 260 }}>
+        <div className="flex w-full flex-col gap-2 sm:h-[260px] sm:w-40">
           <h2>server</h2>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-wrap gap-1.5 sm:flex-col">
             {(
               [
                 { key: "general", label: "general" },
@@ -2022,7 +2022,7 @@ export default function PerformancePage() {
 
             {/* graph absorbs the slack so the core bars' bottom lands exactly
                 on the (square) thread grid's bottom */}
-            <div className="min-h-[7rem] flex-1">
+            <div className="flex min-h-[7rem] flex-1 flex-col">
               <HoverSparkline
                 points={cpuPoints}
                 points3={cpuTempPoints}
@@ -2191,7 +2191,7 @@ export default function PerformancePage() {
             {/* graph — gridded, 100% pinned to the top edge. Stacked traces:
                 a solid darker band for in-use, a lighter band above it for
                 cache; the upper line is the total. */}
-            <div className="min-h-[11rem] flex-1">
+            <div className="flex min-h-[11rem] flex-1 flex-col">
               <HoverSparkline
                 points={memPoints}
                 points2={memAppPoints}
@@ -2318,7 +2318,7 @@ export default function PerformancePage() {
                 </sup>
               </div>
 
-              <div className="min-h-[11rem] flex-1">
+              <div className="flex min-h-[11rem] flex-1 flex-col">
                 <HoverSparkline
                   mirror
                   points={ssdReadPoints}
@@ -2459,7 +2459,7 @@ export default function PerformancePage() {
                 </div>
               </div>
 
-              <div className="min-h-[11rem] flex-1">
+              <div className="flex min-h-[11rem] flex-1 flex-col">
                 <HoverSparkline
                   points={gpuUtilPoints}
                   points3={gpuTempPoints}
@@ -2660,8 +2660,8 @@ export default function PerformancePage() {
           </div>
 
           <div className="mb-5">
-            <div className="mb-3 flex items-end gap-3">
-              <div className="text-3xl leading-none font-semibold tabular-nums">
+            <div className="mb-3 flex flex-wrap items-end gap-3">
+              <div className="text-2xl leading-none font-semibold whitespace-nowrap tabular-nums sm:text-3xl">
                 ~{pw.wallLo.toFixed(0)}–{pw.wallHi.toFixed(0)}
                 <span className="text-lg text-ink-dim"> W</span>
               </div>
@@ -2685,7 +2685,7 @@ export default function PerformancePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-x-5 gap-y-4 border-t border-panel-border pt-5">
+          <div className="grid gap-x-5 gap-y-4 border-t border-panel-border pt-5 sm:grid-cols-3">
             {(
               [
                 ["measured", "Accurate"],
@@ -2869,7 +2869,7 @@ export default function PerformancePage() {
                         sv.running ? "stop" : "start",
                       )
                     }
-                    className="shrink-0 rounded px-2 py-0.5 text-xs font-semibold text-black disabled:opacity-40"
+                    className="tap shrink-0 rounded px-2 py-0.5 text-xs font-semibold text-black disabled:opacity-40"
                     style={{
                       background: sv.running ? "#ff5470" : "#22c55e",
                     }}
@@ -2942,7 +2942,9 @@ export default function PerformancePage() {
                       onClick={() => sortProc(c.k)}
                       className={`cursor-pointer py-2 pr-4 font-medium select-none hover:text-ink ${
                         c.right ? "text-right" : ""
-                      } ${procSort.key === c.k ? "text-ink" : ""}`}
+                      } ${procSort.key === c.k ? "text-ink" : ""} ${
+                        c.k === "user" || c.k === "pid" ? "hidden sm:table-cell" : ""
+                      }`}
                     >
                       {c.label}
                       {procSort.key === c.k
@@ -2969,11 +2971,11 @@ export default function PerformancePage() {
                           style={{ background: procStateColor(p.state) }}
                           title={procStateLabel(p.state)}
                         />
-                        <span className="truncate">{p.name}</span>
+                        <span className="max-w-[10rem] truncate sm:max-w-none">{p.name}</span>
                       </span>
                     </td>
-                    <td className="py-2 pr-4 text-ink-dim">{p.user}</td>
-                    <td className="py-2 pr-4 tabular-nums text-ink-dim">
+                    <td className="hidden py-2 pr-4 text-ink-dim sm:table-cell">{p.user}</td>
+                    <td className="hidden py-2 pr-4 tabular-nums text-ink-dim sm:table-cell">
                       {p.pid}
                     </td>
                     <td className="py-2 pr-4 text-right tabular-nums">
@@ -2987,7 +2989,7 @@ export default function PerformancePage() {
                         type="button"
                         disabled={killBusy != null}
                         onClick={() => killProc(p.pid, p.name)}
-                        className="rounded px-2 py-0.5 text-xs font-semibold text-black disabled:opacity-40"
+                        className="tap rounded px-2 py-0.5 text-xs font-semibold text-black disabled:opacity-40"
                         style={{ background: "#ff5470" }}
                       >
                         {killBusy === p.pid ? "…" : "Kill"}

@@ -83,6 +83,26 @@ main .panel {
   min-width: 0;
 }
 
+/* Phones: tighter panels, 16px form text (stops iOS zooming on focus). */
+@media (max-width: 639px) {
+  main .panel {
+    padding: 1rem;
+  }
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Touch screens: small controls marked .tap get a finger-sized hit area. */
+@media (pointer: coarse) {
+  .tap {
+    min-height: 2.25rem;
+    min-width: 2.25rem;
+  }
+}
+
 /* performance section titles: bigger, in the section colour, softly lit */
 .panel h2.sec-title {
   font-size: 1rem;

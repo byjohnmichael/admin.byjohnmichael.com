@@ -178,11 +178,11 @@ function Vital({
   suffix?: string;
 }) {
   return (
-    <div className="border border-dashed border-panel-border px-3 py-2.5">
-      <div className="text-2xl leading-none font-bold">
+    <div className="min-w-0 border border-dashed border-panel-border px-2 py-2.5 sm:px-3">
+      <div className="text-xl leading-none font-bold sm:text-2xl">
         <CountUp value={value} decimals={decimals} suffix={suffix} />
       </div>
-      <div className="mt-1 text-xs text-ink-dim">
+      <div className="mt-1 truncate text-xs text-ink-dim">
         <span className="text-ink-dim/50">$ </span>
         {label}
       </div>
@@ -278,7 +278,7 @@ function ServiceRow({
   return (
     <li className="flex items-center gap-2 py-2.5 first:pt-0 last:pb-0">
       <button
-        className="shrink-0 px-1 text-sm text-ink-dim hover:text-accent"
+        className="tap shrink-0 px-1 text-sm text-ink-dim hover:text-accent"
         title={pinned ? "Unpin" : "Pin"}
         aria-label={pinned ? "Unpin" : "Pin"}
         onClick={() => onTogglePin(svc.unit)}
@@ -487,9 +487,11 @@ export default function GeneralPage() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      <div className="flex flex-col gap-6 lg:col-span-2">
+      {/* Below lg the two columns dissolve (display: contents) so the
+          sections can be re-ordered: status first, the long lists last. */}
+      <div className="contents lg:col-span-2 lg:flex lg:flex-col lg:gap-6">
       {/* ---------------------------------------------------- system overview */}
-      <section className="panel p-6">
+      <section className="panel p-6 max-lg:order-3">
         <div className="mb-6 flex items-baseline justify-between">
           <h1 className="text-lg font-semibold">System</h1>
           <span className="text-xs text-ink-dim">
@@ -498,7 +500,7 @@ export default function GeneralPage() {
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             <Vital label="memory" value={memPct} decimals={1} suffix="%" />
             {system.disk && (
               <Vital
@@ -547,7 +549,7 @@ export default function GeneralPage() {
       </section>
 
       {/* ---------------------------------------------------- specifications */}
-      <section className="panel p-6">
+      <section className="panel p-6 max-lg:order-5">
         <h2 className="mb-4 text-base font-semibold">Specifications</h2>
         <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
           <SpecGroup title="CPU">
@@ -662,7 +664,7 @@ export default function GeneralPage() {
       </section>
 
       {/* ---------------------------------------------------------- services */}
-      <section className="panel p-6">
+      <section className="panel p-6 max-lg:order-4">
         <div className="mb-3 flex items-baseline justify-between gap-3">
           <h2 className="text-base font-semibold">
             Services{" "}
@@ -751,9 +753,9 @@ export default function GeneralPage() {
       </div>
 
       {/* --------------------------------------------------------- side column */}
-      <div className="flex flex-col gap-6">
+      <div className="contents lg:flex lg:flex-col lg:gap-6">
         {openTodos.length > 0 && (
-          <section className="panel p-6">
+          <section className="panel p-6 max-lg:order-1">
             <h2 className="mb-4 text-base font-semibold">To-do</h2>
             <ul className="flex flex-col gap-2">
               {openTodos.map((todo) => (
@@ -773,7 +775,7 @@ export default function GeneralPage() {
           </section>
         )}
 
-        <section className="panel p-6">
+        <section className="panel p-6 max-lg:order-2">
           <h2 className="mb-4 text-base font-semibold">Quick status</h2>
 
           <div className="flex flex-col divide-y divide-panel-border/60">
@@ -850,7 +852,7 @@ export default function GeneralPage() {
           </div>
         </section>
 
-        <section className="panel border-danger/40 p-6">
+        <section className="panel border-danger/40 p-6 max-lg:order-6">
           <h2 className="mb-1 text-base font-semibold">Reboot server</h2>
           <p className="mb-4 text-xs text-ink-dim">
             Reboots the whole VPS. Every service — this panel included — drops for
