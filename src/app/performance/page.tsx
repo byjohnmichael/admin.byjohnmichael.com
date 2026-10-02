@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { HtopMeter, SegMeter, Spinner } from "@/components/term";
 import {
   Orb,
   ChatPanel,
@@ -340,15 +341,7 @@ function fmtRate(bps: number | null | undefined): string {
 /* ------------------------------------------------------------- primitives */
 
 function Bar({ pct, color }: { pct: number; color?: string }) {
-  const c = Math.max(0, Math.min(100, pct));
-  return (
-    <div className="h-1.5 w-full overflow-hidden rounded bg-panel-border">
-      <div
-        className="h-full rounded"
-        style={{ width: `${c}%`, background: color ?? ACCENT }}
-      />
-    </div>
-  );
+  return <SegMeter pct={pct} color={color ?? ACCENT} />;
 }
 
 /* ----------------------------------------------------- CPU-panel helpers */
@@ -416,66 +409,6 @@ function fmtWRange(lo: number, hi: number): string {
     : `${r(lo)}–${r(hi)} W`;
 }
 
-function CpuIcon({ size = 32 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      aria-hidden
-    >
-      <rect x="7.5" y="7.5" width="9" height="9" rx="1.5" />
-      <rect x="4" y="4" width="16" height="16" rx="2" opacity="0.55" />
-      <path d="M10 2v2M14 2v2M10 20v2M14 20v2M2 10h2M2 14h2M20 10h2M20 14h2" />
-    </svg>
-  );
-}
-
-function MemIcon({ size = 28 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="2.5" y="7" width="19" height="10" rx="1.5" />
-      <path d="M6 17v2.5M10 17v2.5M14 17v2.5M18 17v2.5" />
-      <path d="M6 10.5v3M9.5 10.5v3M13 10.5v3M16.5 10.5v3" opacity="0.6" />
-    </svg>
-  );
-}
-
-function OsIcon({ size = 28 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="3" y="4" width="18" height="16" rx="2" />
-      <path d="M3 8.5h18" />
-      <path d="M7 12.5l2.5 2L7 16.5" />
-      <path d="M12.5 16.5h4" />
-    </svg>
-  );
-}
-
 function fmtUptime(sec: number): string {
   const d = Math.floor(sec / 86400);
   const h = Math.floor((sec % 86400) / 3600);
@@ -483,87 +416,6 @@ function fmtUptime(sec: number): string {
   if (d > 0) return `${d}d ${h}h`;
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
-}
-
-function NetIcon({ size = 28 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M4 9h13l-4 -4" />
-      <path d="M20 15H7l4 4" />
-    </svg>
-  );
-}
-
-function PsuIcon({ size = 28 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="2.5" y="5" width="19" height="14" rx="1.5" />
-      <circle cx="9" cy="12" r="4" />
-      <rect x="15.5" y="7.5" width="4" height="3" rx="0.5" />
-      <path d="M15.5 14.5h4" />
-    </svg>
-  );
-}
-
-function GpuIcon({ size = 28 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="2" y="6" width="19" height="12" rx="2" />
-      <circle cx="9" cy="12" r="3" />
-      <circle cx="16" cy="12" r="2" opacity="0.6" />
-      <path d="M4 18v2.5M21 9h1.5M21 13h1.5" />
-    </svg>
-  );
-}
-
-function SsdIcon({ size = 28 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <rect x="3" y="5.5" width="18" height="13" rx="2" />
-      <circle cx="7.5" cy="12" r="1.5" fill="currentColor" stroke="none" />
-      <path d="M11.5 9.5h6M11.5 12h6M11.5 14.5h6" opacity="0.6" />
-    </svg>
-  );
 }
 
 function KV({ k, v, color }: { k: string; v: string; color?: string }) {
@@ -673,6 +525,18 @@ function procStateLabel(st: string): string {
   );
 }
 
+// Resolve "var(--x)" to its computed value so canvas can paint it.
+function resolveColor(el: Element, c: string): string {
+  const m = /^var\((--[\w-]+)\)$/.exec(c.trim());
+  if (!m) return c;
+  return getComputedStyle(el).getPropertyValue(m[1]).trim() || "#888";
+}
+
+// btop-style dot-matrix graph. Series 1 lights up columns of dots (brighter
+// toward the top); series 2 is either a brighter subset drawn inside series 1
+// (e.g. RAM in-use within total) or, with `mirror`, its own graph hanging
+// below a centre line (read/write, down/up). Series 3 is a plain line on its
+// own scale (temperatures). Hover shows a readout for that moment.
 function HoverSparkline({
   points,
   points2,
@@ -689,9 +553,10 @@ function HoverSparkline({
   max2: max2Prop,
   max3: max3Prop,
   fillSecond = true,
+  mirror = false,
 }: {
   points: { t: number; v: number }[];
-  /** optional second series, drawn over the first (e.g. a subset total) */
+  /** optional second series: a subset inside series 1, or mirrored below it */
   points2?: { t: number; v: number }[];
   /** optional third series — always line-only, may use its own scale (max3) */
   points3?: { t: number; v: number }[];
@@ -703,18 +568,22 @@ function HoverSparkline({
   fmt: (v: number) => string;
   fmt2?: (v: number) => string;
   fmt3?: (v: number) => string;
+  /** draws a faint frame around the graph */
   grid?: boolean;
   /** full-scale value for series 1; defaults to 100 (percentage graphs) */
   max?: number;
   /** independent full-scale for series 2 / 3; default to `max` */
   max2?: number;
   max3?: number;
-  /** whether series 2 gets a filled area (default true); series 3 never does */
+  /** whether series 2 lights its dots (default true) or only its top dot */
   fillSecond?: boolean;
+  /** draw series 2 downward from a centre line instead of inside series 1 */
+  mirror?: boolean;
 }) {
   const [hi, setHi] = useState<number | null>(null);
-  const W = 600;
-  const H = 100; // nominal viewBox units — the SVG stretches to fill its box
+  const [box, setBox] = useState({ w: 0, h: 0 });
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const n = points.length;
   const max = maxProp ?? 100;
   const max2 = max2Prop ?? max;
@@ -723,14 +592,105 @@ function HoverSparkline({
   const f3 = fmt3 ?? fmt;
   const c2 = color2 ?? color;
   const c3 = color3 ?? color;
-  const px = (i: number) => (n < 2 ? 0 : (i / (n - 1)) * W);
-  const py = (v: number, m: number) =>
-    H - (Math.max(0, Math.min(v, m)) / m) * H;
-  const toLine = (pts: { v: number }[], m: number) =>
-    pts.map((p, i) => `${px(i).toFixed(1)},${py(p.v, m).toFixed(1)}`).join(" ");
-  const line = toLine(points, max);
-  const line2 = points2 && points2.length === n ? toLine(points2, max2) : null;
-  const line3 = points3 && points3.length === n ? toLine(points3, max3) : null;
+  const has2 = !!points2 && points2.length === n;
+  const has3 = !!points3 && points3.length === n;
+
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) =>
+      setBox({ w: e.contentRect.width, h: e.contentRect.height }),
+    );
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const cv = canvasRef.current;
+    const wrap = wrapRef.current;
+    if (!cv || !wrap || box.w < 8 || box.h < 8) return;
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(box.w * dpr);
+    cv.height = Math.round(box.h * dpr);
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, box.w, box.h);
+
+    const PITCH = 4;
+    const R = 1.1;
+    const cols = Math.floor(box.w / PITCH);
+    const rows = Math.floor(box.h / PITCH);
+    const mid = mirror && has2 ? Math.floor(rows / 2) : rows;
+    const col1 = resolveColor(wrap, color);
+    const col2 = resolveColor(wrap, c2);
+    const at = (c: number) =>
+      n < 2 ? 0 : Math.round((c / Math.max(1, cols - 1)) * (n - 1));
+    const frac = (v: number, m: number) => Math.max(0, Math.min(1, v / m));
+    const hiCol =
+      hi != null && n > 1 ? Math.round((hi / (n - 1)) * (cols - 1)) : null;
+
+    for (let c = 0; c < cols && n > 0; c++) {
+      const i = at(c);
+      const h1 = Math.round(frac(points[i].v, max) * mid);
+      const h2 = has2
+        ? Math.round(frac(points2![i].v, max2) * (mirror ? rows - mid : mid))
+        : 0;
+      const x = c * PITCH + PITCH / 2;
+      for (let r = 0; r < rows; r++) {
+        let fill = c === hiCol ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.045)";
+        let alpha = 1;
+        if (r < mid) {
+          const lvl = mid - r; // 1 at the baseline, up to `mid`
+          const t = lvl / mid;
+          if (has2 && !mirror && (fillSecond ? lvl <= h2 : lvl === h2)) {
+            fill = col2;
+            alpha = 0.45 + 0.55 * t;
+          } else if (lvl <= h1) {
+            fill = col1;
+            alpha = has2 && !mirror ? 0.3 + 0.3 * t : 0.35 + 0.65 * t;
+          }
+        } else {
+          const lvl = r - mid + 1; // 1 just under the centre line
+          if (lvl <= h2) {
+            fill = col2;
+            alpha = 0.35 + (0.65 * lvl) / (rows - mid);
+          }
+        }
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = fill;
+        ctx.beginPath();
+        ctx.arc(x, r * PITCH + PITCH / 2, R, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    if (mirror && has2) {
+      ctx.fillStyle = "rgba(255,255,255,0.12)";
+      ctx.fillRect(0, mid * PITCH - 0.5, box.w, 1);
+    }
+    if (has3 && n > 1) {
+      ctx.strokeStyle = resolveColor(wrap, c3);
+      ctx.lineWidth = 1.5;
+      ctx.lineJoin = "round";
+      ctx.shadowColor = "rgba(0,0,0,0.9)";
+      ctx.shadowBlur = 3;
+      ctx.beginPath();
+      points3!.forEach((p, i) => {
+        const x = (i / (n - 1)) * box.w;
+        const y = box.h - frac(p.v, max3) * box.h;
+        if (i) ctx.lineTo(x, y);
+        else ctx.moveTo(x, y);
+      });
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+    if (hiCol != null) {
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.fillRect(hiCol * PITCH + PITCH / 2 - 0.5, 0, 1, box.h);
+    }
+  }, [box, points, points2, points3, color, c2, c3, max, max2, max3, hi, n, has2, has3, mirror, fillSecond]);
 
   const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (n < 2) return;
@@ -739,15 +699,15 @@ function HoverSparkline({
     setHi(Math.max(0, Math.min(n - 1, Math.round(f * (n - 1)))));
   };
   const hp = hi != null ? points[hi] : null;
-  const hp2 = hi != null && points2 ? points2[hi] : null;
-  const hp3 = hi != null && points3 ? points3[hi] : null;
+  const hp2 = hi != null && has2 ? points2![hi] : null;
+  const hp3 = hi != null && has3 ? points3![hi] : null;
   const hpct = hi != null && n > 1 ? (hi / (n - 1)) * 100 : 0;
   const last = points[n - 1];
 
   const legend = [
     { label: keys?.[0], color, v: points[n - 1]?.v, fmt },
-    line2 && { label: keys?.[1], color: c2, v: points2![n - 1]?.v, fmt: f2 },
-    line3 && { label: keys?.[2], color: c3, v: points3![n - 1]?.v, fmt: f3 },
+    has2 && { label: keys?.[1], color: c2, v: points2![n - 1]?.v, fmt: f2 },
+    has3 && { label: keys?.[2], color: c3, v: points3![n - 1]?.v, fmt: f3 },
   ].filter(Boolean) as {
     label?: string;
     color: string;
@@ -757,106 +717,19 @@ function HoverSparkline({
 
   return (
     <div
-      className={`relative h-full min-h-[3rem] ${grid ? "rounded-sm border border-panel-border/70" : ""}`}
-      style={
-        grid
-          ? {
-              backgroundImage:
-                "linear-gradient(var(--panel-border) 1px, transparent 1px), radial-gradient(var(--panel-border) 1px, transparent 1.4px)",
-              backgroundSize: "100% 25%, 22px 22px",
-              backgroundPosition: "left top, center top",
-            }
-          : undefined
-      }
+      ref={wrapRef}
+      className={`relative h-full min-h-[3rem] flex-1 cursor-crosshair ${grid ? "border border-panel-border/70" : ""}`}
       onMouseMove={onMove}
       onMouseLeave={() => setHi(null)}
     >
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        preserveAspectRatio="none"
-        className="h-full w-full"
-      >
-        {n >= 2 && (
-          <>
-            <polygon points={`0,${H} ${line} ${W},${H}`} fill={color} opacity={0.14} />
-            {line2 && fillSecond && (
-              <polygon points={`0,${H} ${line2} ${W},${H}`} fill={c2} opacity={0.32} />
-            )}
-            <polyline
-              points={line}
-              fill="none"
-              stroke={color}
-              strokeWidth={1.5}
-              vectorEffect="non-scaling-stroke"
-            />
-            {line2 && (
-              <polyline
-                points={line2}
-                fill="none"
-                stroke={c2}
-                strokeWidth={1.5}
-                vectorEffect="non-scaling-stroke"
-              />
-            )}
-            {line3 && (
-              <polyline
-                points={line3}
-                fill="none"
-                stroke={c3}
-                strokeWidth={1.5}
-                strokeDasharray="4 3"
-                vectorEffect="non-scaling-stroke"
-              />
-            )}
-            {hi != null && hp && (
-              <>
-                <line
-                  x1={px(hi)}
-                  y1={0}
-                  x2={px(hi)}
-                  y2={H}
-                  stroke="var(--ink-dim)"
-                  strokeWidth={1}
-                  vectorEffect="non-scaling-stroke"
-                  opacity={0.6}
-                />
-                <circle
-                  cx={px(hi)}
-                  cy={py(hp.v, max)}
-                  r={3.5}
-                  fill={color}
-                  vectorEffect="non-scaling-stroke"
-                />
-                {hp2 && (
-                  <circle
-                    cx={px(hi)}
-                    cy={py(hp2.v, max2)}
-                    r={3.5}
-                    fill={c2}
-                    vectorEffect="non-scaling-stroke"
-                  />
-                )}
-                {hp3 && (
-                  <circle
-                    cx={px(hi)}
-                    cy={py(hp3.v, max3)}
-                    r={3.5}
-                    fill={c3}
-                    vectorEffect="non-scaling-stroke"
-                  />
-                )}
-              </>
-            )}
-          </>
-        )}
-      </svg>
+      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
       {keys && last && legend.length > 0 && (
-        <div className="pointer-events-none absolute top-1.5 left-2 flex flex-col gap-0.5 text-[10px] leading-none tabular-nums">
+        <div className="pointer-events-none absolute top-1.5 left-2 flex flex-col gap-0.5 bg-panel/70 px-1 py-0.5 text-[10px] leading-none tabular-nums">
           {legend.map((s, i) => (
             <span key={i} className="flex items-center gap-1.5 text-ink-dim">
               <span
-                className="inline-block h-[3px] w-3 rounded-full"
+                className="inline-block h-2 w-2"
                 style={{ background: s.color }}
               />
               {s.label} {s.fmt(s.v)}
@@ -867,7 +740,7 @@ function HoverSparkline({
 
       {hp && (
         <div
-          className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 rounded-sm border border-panel-border bg-panel px-2 py-1 text-xs tabular-nums whitespace-nowrap"
+          className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 border border-panel-border bg-panel px-2 py-1 text-xs tabular-nums whitespace-nowrap"
           style={{ left: `${Math.max(6, Math.min(94, hpct))}%` }}
         >
           {keys && (hp2 || hp3) ? (
@@ -1316,28 +1189,7 @@ function SsdModel({ drive }: { drive: Snapshot["disks"][number] }) {
 const WATT_FULL = 65; // ≈ CPU package TDP — the bolts span 0 → this
 const WATT_FULL_DRAM = 10; // one bolt, full at 10 W of DRAM draw
 
-function Bolt({ frac }: { frac: number }) {
-  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
-  const off = `${((1 - Math.max(0, Math.min(1, frac))) * 100).toFixed(1)}%`;
-  return (
-    <svg width="14" height="21" viewBox="0 0 12 18" aria-hidden>
-      <defs>
-        <linearGradient id={uid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset={off} stopColor="transparent" />
-          <stop offset={off} stopColor="#ffd60a" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M7.5 0.5 L1.5 9.5 L5.5 9.5 L4.5 17.5 L10.5 7.5 L6.5 7.5 Z"
-        fill={`url(#${uid})`}
-        stroke="var(--ink-dim)"
-        strokeWidth="1"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
+// htop-style [|||   ] meter, full at `full` watts
 function WattBolts({
   watts,
   full = WATT_FULL,
@@ -1347,14 +1199,8 @@ function WattBolts({
   full?: number;
   count?: number;
 }) {
-  const level = watts == null ? 0 : Math.max(0, (watts / full) * count);
-  return (
-    <div className="flex items-end gap-px">
-      {Array.from({ length: count }, (_, i) => (
-        <Bolt key={i} frac={level - i} />
-      ))}
-    </div>
-  );
+  const pct = watts == null ? 0 : (watts / full) * 100;
+  return <HtopMeter pct={pct} width={4 + count * 3} />;
 }
 
 /* ----------------------------------------------------------- CPU status orb */
@@ -1696,79 +1542,16 @@ function CpuOrb({
     { c: heatCol, w: heatW },
   ]);
   const intensity = Math.max(loadP, heatW);
-  const tot = calmW + loadW + heatW;
-
-  const lit = rgbCss(shade(base, 0.3));
-  const mid = rgbCss(base);
-  const rim = rgbCss(shade(base, -0.6));
   const glow = rgbCss(shade(base, 0.06), 0.45 + 0.4 * intensity);
-  const glowFaint = rgbCss(shade(base, 0.06), 0.25 + 0.25 * intensity);
-  const breatheDur = 6.5 - 3.7 * intensity; // 6.5s calm → ~2.8s stressed
-  const ease = "0.8s cubic-bezier(.4,0,.2,1)";
 
+  // a braille spinner in the orb's colour mix — spins faster under load
   return (
-    <div
-      aria-hidden
-      className="relative shrink-0"
-      style={{
-        width: size,
-        height: size,
-        filter: `drop-shadow(0 0 ${2 + 3 * intensity}px ${glow}) drop-shadow(0 0 ${6 + 7 * intensity}px ${glowFaint})`,
-        transition: `filter ${ease}`,
-      }}
-    >
-      <div
-        className="cpu-orb relative h-full w-full overflow-hidden rounded-full"
-        style={{
-          ["--orb-dur" as string]: `${breatheDur}s`,
-          background: `radial-gradient(circle at 33% 28%, ${lit}, ${mid} 52%, ${rim} 100%)`,
-          transition: `background ${ease}`,
-        }}
-      >
-      {/* drifting accent — load */}
-      <div
-        className="cpu-orb-blob-a absolute rounded-full"
-        style={{
-          left: "24%",
-          top: "62%",
-          width: "80%",
-          height: "80%",
-          transform: `translate(-50%,-50%) scale(${0.55 + 0.7 * loadP})`,
-          background: `radial-gradient(circle, ${rgbCss(shade(ORB_LOAD, 0.08), 0.9)}, ${rgbCss(ORB_LOAD, 0)} 68%)`,
-          opacity: 0.1 + 0.45 * (loadW / tot),
-          mixBlendMode: "screen",
-          filter: "blur(6px)",
-          transition: `opacity ${ease}, transform ${ease}`,
-        }}
-      />
-      {/* drifting accent — heat */}
-      <div
-        className="cpu-orb-blob-b absolute rounded-full"
-        style={{
-          left: "74%",
-          top: "24%",
-          width: "82%",
-          height: "82%",
-          transform: `translate(-50%,-50%) scale(${0.5 + 0.85 * heatW})`,
-          background: `radial-gradient(circle, ${rgbCss(heatCol, 0.92)}, ${rgbCss(heatCol, 0)} 66%)`,
-          opacity: 0.12 + 0.6 * (heatW / tot),
-          mixBlendMode: "screen",
-          filter: "blur(6px)",
-          transition: `opacity ${ease}, transform ${ease}, background ${ease}`,
-        }}
-      />
-      {/* sphere gloss + rim */}
-      <div
-        className="pointer-events-none absolute inset-0 rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle at 31% 24%, rgba(255,255,255,.42), rgba(255,255,255,0) 36%), radial-gradient(circle at 72% 82%, rgba(0,0,0,.34), rgba(0,0,0,0) 52%)",
-          boxShadow:
-            "inset 0 0 0 1px rgba(255,255,255,.14), inset -3px -4px 8px rgba(0,0,0,.36)",
-        }}
-      />
-      </div>
-    </div>
+    <Spinner
+      load={intensity}
+      color={rgbCss(shade(base, 0.15))}
+      glow={glow}
+      size={Math.round(size * 0.5)}
+    />
   );
 }
 
@@ -2309,28 +2092,28 @@ export default function PerformancePage() {
     <>
       <section className="panel mb-6 flex flex-wrap gap-6 p-6">
         <div className="flex flex-col items-center gap-2">
-          <div className="text-sm font-semibold text-ink">Bob</div>
+          <h2>bob</h2>
           <Orb reading={bobReading} size={220} />
         </div>
         <div className="min-w-[280px] flex-1" style={{ height: 260 }}>
           <ChatPanel adapter={bobChatAdapter} />
         </div>
-        <div className="flex w-40 flex-col gap-2" style={{ height: 260 }}>
-          <div className="text-sm font-semibold text-ink">Server</div>
-          <div className="flex flex-col gap-1.5">
+        <div className="flex w-full flex-col gap-2 sm:h-[260px] sm:w-40">
+          <h2>server</h2>
+          <div className="flex flex-wrap gap-1.5 sm:flex-col">
             {(
               [
-                { key: "general", label: "General" },
-                { key: "minecraft", label: "Minecraft" },
-                { key: "wow", label: "WoW" },
+                { key: "general", label: "general" },
+                { key: "minecraft", label: "minecraft" },
+                { key: "wow", label: "wow" },
               ] as const
             ).map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setServerTab(tab.key)}
-                className={`rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                className={`term-tab px-3 py-2 text-left text-sm transition-colors ${
                   serverTab === tab.key
-                    ? "bg-accent/20 text-ink"
+                    ? "bg-accent/15 text-ink"
                     : "text-ink-dim hover:bg-white/5 hover:text-ink"
                 }`}
               >
@@ -2475,10 +2258,7 @@ export default function PerformancePage() {
       {/* ------------------------------------------------------------- CPU */}
       <section className="panel cpu-section p-6 lg:col-span-2">
         <div className="group mb-4 flex items-center gap-3">
-          <span className="text-accent">
-            <CpuIcon size={44} />
-          </span>
-          <span className="text-accent text-4xl font-bold tracking-tight">CPU</span>
+          <h2 className="sec-title">cpu</h2>
           <div className="relative ml-auto flex items-center gap-2.5">
             <span
               role="status"
@@ -2521,7 +2301,7 @@ export default function PerformancePage() {
 
             {/* graph absorbs the slack so the core bars' bottom lands exactly
                 on the (square) thread grid's bottom */}
-            <div className="min-h-[7rem] flex-1">
+            <div className="flex min-h-[7rem] flex-1 flex-col">
               <HoverSparkline
                 points={cpuPoints}
                 points3={cpuTempPoints}
@@ -2653,12 +2433,7 @@ export default function PerformancePage() {
       {/* ---------------------------------------------------------- memory */}
       <section className="panel ram-section p-6">
         <div className="group mb-4 flex items-center gap-2.5">
-          <span className="text-accent">
-            <MemIcon size={28} />
-          </span>
-          <span className="text-accent text-2xl font-bold tracking-tight">
-            RAM
-          </span>
+          <h2 className="sec-title">ram</h2>
           <div className="relative ml-auto flex items-center gap-2">
             <span
               role="status"
@@ -2695,7 +2470,7 @@ export default function PerformancePage() {
             {/* graph — gridded, 100% pinned to the top edge. Stacked traces:
                 a solid darker band for in-use, a lighter band above it for
                 cache; the upper line is the total. */}
-            <div className="min-h-[11rem] flex-1">
+            <div className="flex min-h-[11rem] flex-1 flex-col">
               <HoverSparkline
                 points={memPoints}
                 points2={memAppPoints}
@@ -2788,12 +2563,7 @@ export default function PerformancePage() {
       {disks.length > 0 && (
         <section className="panel ssd-section p-6">
           <div className="group mb-4 flex items-center gap-2.5">
-            <span className="text-accent">
-              <SsdIcon size={28} />
-            </span>
-            <span className="text-accent text-2xl font-bold tracking-tight">
-              SSD
-            </span>
+            <h2 className="sec-title">ssd</h2>
             <div className="relative ml-auto flex items-center gap-2">
               <span
                 role="status"
@@ -2827,8 +2597,9 @@ export default function PerformancePage() {
                 </sup>
               </div>
 
-              <div className="min-h-[11rem] flex-1">
+              <div className="flex min-h-[11rem] flex-1 flex-col">
                 <HoverSparkline
+                  mirror
                   points={ssdReadPoints}
                   points2={ssdWritePoints}
                   points3={ssdTempPoints}
@@ -2924,12 +2695,7 @@ export default function PerformancePage() {
       {g0 && gpuOrb && (
         <section className="panel gpu-section p-6 lg:col-span-2">
           <div className="group mb-4 flex items-center gap-2.5">
-            <span className="text-accent">
-              <GpuIcon size={30} />
-            </span>
-            <span className="text-accent text-2xl font-bold tracking-tight">
-              GPU
-            </span>
+            <h2 className="sec-title">gpu</h2>
             <div className="relative ml-auto flex items-center gap-2">
               <span
                 role="status"
@@ -2972,7 +2738,7 @@ export default function PerformancePage() {
                 </div>
               </div>
 
-              <div className="min-h-[11rem] flex-1">
+              <div className="flex min-h-[11rem] flex-1 flex-col">
                 <HoverSparkline
                   points={gpuUtilPoints}
                   points3={gpuTempPoints}
@@ -3155,12 +2921,7 @@ export default function PerformancePage() {
       {pw && psuOrb && (
         <section className="panel psu-section p-6">
           <div className="group mb-4 flex items-center gap-2.5">
-            <span className="text-accent">
-              <PsuIcon size={28} />
-            </span>
-            <span className="text-accent text-2xl font-bold tracking-tight">
-              PSU
-            </span>
+            <h2 className="sec-title">psu</h2>
             <div className="relative ml-auto flex items-center gap-2">
               <span
                 role="status"
@@ -3178,8 +2939,8 @@ export default function PerformancePage() {
           </div>
 
           <div className="mb-5">
-            <div className="mb-3 flex items-end gap-3">
-              <div className="text-3xl leading-none font-semibold tabular-nums">
+            <div className="mb-3 flex flex-wrap items-end gap-3">
+              <div className="text-2xl leading-none font-semibold whitespace-nowrap tabular-nums sm:text-3xl">
                 ~{pw.wallLo.toFixed(0)}–{pw.wallHi.toFixed(0)}
                 <span className="text-lg text-ink-dim"> W</span>
               </div>
@@ -3203,7 +2964,7 @@ export default function PerformancePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-x-5 gap-y-4 border-t border-panel-border pt-5">
+          <div className="grid gap-x-5 gap-y-4 border-t border-panel-border pt-5 sm:grid-cols-3">
             {(
               [
                 ["measured", "Accurate"],
@@ -3246,12 +3007,7 @@ export default function PerformancePage() {
       {/* ------------------------------------------------------------- NET */}
       <section className="panel net-section p-6">
         <div className="group mb-4 flex items-center gap-2.5">
-          <span className="text-accent">
-            <NetIcon size={28} />
-          </span>
-          <span className="text-accent text-2xl font-bold tracking-tight">
-            NET
-          </span>
+          <h2 className="sec-title">net</h2>
           <div className="relative ml-auto flex items-center gap-2">
             <span
               role="status"
@@ -3283,6 +3039,7 @@ export default function PerformancePage() {
 
               <div className="h-44">
                 <HoverSparkline
+                  mirror
                   points={netDownPoints}
                   points2={netUpPoints}
                   color={NET_PURPLE}
@@ -3342,12 +3099,7 @@ export default function PerformancePage() {
       {/* -------------------------------------------------------------- OS */}
       <section className="panel os-section p-6 lg:col-span-2">
         <div className="group mb-4 flex items-center gap-2.5">
-          <span className="text-accent">
-            <OsIcon size={28} />
-          </span>
-          <span className="text-accent text-2xl font-bold tracking-tight">
-            OS
-          </span>
+          <h2 className="sec-title">os</h2>
           <div className="relative ml-auto flex items-center gap-2">
             <span
               role="status"
@@ -3396,7 +3148,7 @@ export default function PerformancePage() {
                         sv.running ? "stop" : "start",
                       )
                     }
-                    className="shrink-0 rounded px-2 py-0.5 text-xs font-semibold text-black disabled:opacity-40"
+                    className="tap shrink-0 rounded px-2 py-0.5 text-xs font-semibold text-black disabled:opacity-40"
                     style={{
                       background: sv.running ? "#ff5470" : "#22c55e",
                     }}
@@ -3451,7 +3203,9 @@ export default function PerformancePage() {
           </div>
           <div
             className={
-              procsScroll ? "max-h-[36rem] overflow-y-auto" : undefined
+              procsScroll
+                ? "max-h-[36rem] overflow-x-auto overflow-y-auto"
+                : "overflow-x-auto"
             }
           >
             <table className="w-full text-left text-sm">
@@ -3467,7 +3221,9 @@ export default function PerformancePage() {
                       onClick={() => sortProc(c.k)}
                       className={`cursor-pointer py-2 pr-4 font-medium select-none hover:text-ink ${
                         c.right ? "text-right" : ""
-                      } ${procSort.key === c.k ? "text-ink" : ""}`}
+                      } ${procSort.key === c.k ? "text-ink" : ""} ${
+                        c.k === "user" || c.k === "pid" ? "hidden sm:table-cell" : ""
+                      }`}
                     >
                       {c.label}
                       {procSort.key === c.k
@@ -3494,11 +3250,11 @@ export default function PerformancePage() {
                           style={{ background: procStateColor(p.state) }}
                           title={procStateLabel(p.state)}
                         />
-                        <span className="truncate">{p.name}</span>
+                        <span className="max-w-[10rem] truncate sm:max-w-none">{p.name}</span>
                       </span>
                     </td>
-                    <td className="py-2 pr-4 text-ink-dim">{p.user}</td>
-                    <td className="py-2 pr-4 tabular-nums text-ink-dim">
+                    <td className="hidden py-2 pr-4 text-ink-dim sm:table-cell">{p.user}</td>
+                    <td className="hidden py-2 pr-4 tabular-nums text-ink-dim sm:table-cell">
                       {p.pid}
                     </td>
                     <td className="py-2 pr-4 text-right tabular-nums">
@@ -3512,7 +3268,7 @@ export default function PerformancePage() {
                         type="button"
                         disabled={killBusy != null}
                         onClick={() => killProc(p.pid, p.name)}
-                        className="rounded px-2 py-0.5 text-xs font-semibold text-black disabled:opacity-40"
+                        className="tap rounded px-2 py-0.5 text-xs font-semibold text-black disabled:opacity-40"
                         style={{ background: "#ff5470" }}
                       >
                         {killBusy === p.pid ? "…" : "Kill"}

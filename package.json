@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "bob-the-orb": "file:../bob-the-orb",
+    "motion": "^12.43.0",
     "next": "16.3.3",
     "prismarine-nbt": "^2.8.0",
     "react": "19.2.8",

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { CountUp, SegMeter } from "@/components/term";
 
 type ServiceAction = "start" | "stop" | "restart" | "enable" | "disable";
 
@@ -161,13 +162,30 @@ function Dot({ ok }: { ok: boolean }) {
 }
 
 function Meter({ pct }: { pct: number }) {
-  const clamped = Math.max(0, Math.min(100, pct));
+  return <SegMeter pct={pct} color={pct > 85 ? "var(--danger)" : undefined} />;
+}
+
+// big headline number in a dashed box, e.g. "39.4%" over "$ memory"
+function Vital({
+  label,
+  value,
+  decimals,
+  suffix,
+}: {
+  label: string;
+  value: number;
+  decimals: number;
+  suffix?: string;
+}) {
   return (
-    <div className="h-2 w-full overflow-hidden rounded bg-panel-border">
-      <div
-        className={`h-full rounded ${clamped > 85 ? "bg-danger" : "bg-accent"}`}
-        style={{ width: `${clamped}%` }}
-      />
+    <div className="min-w-0 border border-dashed border-panel-border px-2 py-2.5 sm:px-3">
+      <div className="text-xl leading-none font-bold sm:text-2xl">
+        <CountUp value={value} decimals={decimals} suffix={suffix} />
+      </div>
+      <div className="mt-1 truncate text-xs text-ink-dim">
+        <span className="text-ink-dim/50">$ </span>
+        {label}
+      </div>
     </div>
   );
 }
@@ -192,7 +210,8 @@ function SpecGroup({
 }) {
   return (
     <div>
-      <div className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-dim">
+      <div className="mb-1 text-xs font-semibold text-ink-dim lowercase">
+        <span className="text-accent">&gt; </span>
         {title}
       </div>
       <div className="flex flex-col gap-0.5">{children}</div>
@@ -259,7 +278,7 @@ function ServiceRow({
   return (
     <li className="flex items-center gap-2 py-2.5 first:pt-0 last:pb-0">
       <button
-        className="shrink-0 px-1 text-sm text-ink-dim hover:text-accent"
+        className="tap shrink-0 px-1 text-sm text-ink-dim hover:text-accent"
         title={pinned ? "Unpin" : "Pin"}
         aria-label={pinned ? "Unpin" : "Pin"}
         onClick={() => onTogglePin(svc.unit)}
@@ -462,9 +481,11 @@ export default function GeneralPage() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
-      <div className="flex flex-col gap-6 lg:col-span-2">
+      {/* Below lg the two columns dissolve (display: contents) so the
+          sections can be re-ordered: status first, the long lists last. */}
+      <div className="contents lg:col-span-2 lg:flex lg:flex-col lg:gap-6">
       {/* ---------------------------------------------------- system overview */}
-      <section className="panel p-6">
+      <section className="panel p-6 max-lg:order-3">
         <div className="mb-6 flex items-baseline justify-between">
           <h1 className="text-lg font-semibold">System</h1>
           <span className="text-xs text-ink-dim">
@@ -473,6 +494,19 @@ export default function GeneralPage() {
         </div>
 
         <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <Vital label="memory" value={memPct} decimals={1} suffix="%" />
+            {system.disk && (
+              <Vital
+                label={`disk ${system.disk.path}`}
+                value={system.disk.usePct}
+                decimals={0}
+                suffix="%"
+              />
+            )}
+            <Vital label="load 1m" value={system.load[0] ?? 0} decimals={2} />
+          </div>
+
           <div>
             <div className="mb-1 flex items-baseline justify-between text-sm">
               <span className="text-ink-dim">Memory</span>
@@ -509,7 +543,7 @@ export default function GeneralPage() {
       </section>
 
       {/* ---------------------------------------------------- specifications */}
-      <section className="panel p-6">
+      <section className="panel p-6 max-lg:order-5">
         <h2 className="mb-4 text-base font-semibold">Specifications</h2>
         <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
           <SpecGroup title="CPU">
@@ -624,7 +658,7 @@ export default function GeneralPage() {
       </section>
 
       {/* ---------------------------------------------------------- services */}
-      <section className="panel p-6">
+      <section className="panel p-6 max-lg:order-4">
         <div className="mb-3 flex items-baseline justify-between gap-3">
           <h2 className="text-base font-semibold">
             Services{" "}
@@ -696,19 +730,19 @@ export default function GeneralPage() {
       </div>
 
       {/* --------------------------------------------------------- side column */}
-      <div className="flex flex-col gap-6">
+      <div className="contents lg:flex lg:flex-col lg:gap-6">
         {openTodos.length > 0 && (
-          <section className="panel p-6">
+          <section className="panel p-6 max-lg:order-1">
             <h2 className="mb-4 text-base font-semibold">To-do</h2>
             <ul className="flex flex-col gap-2">
               {openTodos.map((todo) => (
                 <li key={todo.key}>
                   <Link
                     href={todo.href}
-                    className="flex items-center justify-between rounded-sm border border-panel-border/60 px-3 py-2 text-sm transition-colors hover:border-panel-border hover:text-ink"
+                    className="flex items-center justify-between border border-dashed border-panel-border px-3 py-2 text-sm transition-colors hover:border-panel-border hover:text-ink"
                   >
                     <span className="capitalize">{todo.label}</span>
-                    <span className="rounded bg-accent/20 px-2 py-0.5 text-xs font-semibold tabular-nums text-accent">
+                    <span className="term-badge border border-accent/60 px-1.5 py-0.5 text-xs font-bold tabular-nums text-accent">
                       {todo.count}
                     </span>
                   </Link>
@@ -718,7 +752,7 @@ export default function GeneralPage() {
           </section>
         )}
 
-        <section className="panel p-6">
+        <section className="panel p-6 max-lg:order-2">
           <h2 className="mb-4 text-base font-semibold">Quick status</h2>
 
           <div className="flex flex-col divide-y divide-panel-border/60">
@@ -795,7 +829,7 @@ export default function GeneralPage() {
           </div>
         </section>
 
-        <section className="panel border-danger/40 p-6">
+        <section className="panel border-danger/40 p-6 max-lg:order-6">
           <h2 className="mb-1 text-base font-semibold">Reboot server</h2>
           <p className="mb-4 text-xs text-ink-dim">
             Reboots the whole VPS. Every service — this panel included — drops for

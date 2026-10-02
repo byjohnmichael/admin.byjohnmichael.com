@@ -739,7 +739,7 @@ export default function McPage() {
 
           <form
             onSubmit={handleQuickAdd}
-            className="mb-6 flex items-end gap-3 border-b border-panel-border/60 pb-6"
+            className="mb-6 flex flex-wrap items-end gap-3 border-b border-panel-border/60 pb-6"
           >
             <label className="flex flex-1 flex-col gap-1">
               <span className="text-xs text-ink-dim">Quick add</span>
