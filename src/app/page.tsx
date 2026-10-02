@@ -326,7 +326,6 @@ export default function GeneralPage() {
   );
   const [svcQuery, setSvcQuery] = useState("");
   const [svcPins, setSvcPins] = useState<string[]>([]);
-  const [svcShowAll, setSvcShowAll] = useState(false);
 
   useEffect(() => {
     // Hydrate pins from localStorage after mount (not during SSR, and kept out
@@ -424,7 +423,7 @@ export default function GeneralPage() {
   if (error && !data) {
     return (
       <div className="panel p-8 text-ink-dim">
-        <h1 className="mb-2 text-lg font-semibold text-ink">General</h1>
+        <h1 className="mb-2 text-lg font-semibold text-ink">Overview</h1>
         <p>Couldn&apos;t load server status.</p>
         <button className="btn btn-ghost mt-4" onClick={load}>
           Retry
@@ -456,11 +455,6 @@ export default function GeneralPage() {
   const otherServices = services
     .filter((s) => !pinnedSet.has(s.unit) && svcMatch(s))
     .sort(byUnitName);
-  const SVC_LIMIT = 30;
-  const svcCollapsed = !svcq && !svcShowAll;
-  const visibleOthers = svcCollapsed
-    ? otherServices.slice(0, SVC_LIMIT)
-    : otherServices;
   const memUsed = system.mem.totalBytes - system.mem.availableBytes;
   const memPct = system.mem.totalBytes
     ? (memUsed / system.mem.totalBytes) * 100
@@ -657,7 +651,7 @@ export default function GeneralPage() {
         {services.length === 0 ? (
           <p className="text-sm text-ink-dim">No services.</p>
         ) : (
-          <>
+          <div className="max-h-[32rem] overflow-y-auto">
             {pinnedServices.length > 0 && (
               <>
                 <div className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-dim">
@@ -679,7 +673,7 @@ export default function GeneralPage() {
             )}
 
             <ul className="flex flex-col divide-y divide-panel-border/60">
-              {visibleOthers.map((svc) => (
+              {otherServices.map((svc) => (
                 <ServiceRow
                   key={svc.unit}
                   svc={svc}
@@ -691,29 +685,12 @@ export default function GeneralPage() {
               ))}
             </ul>
 
-            {visibleOthers.length === 0 && (
+            {otherServices.length === 0 && (
               <p className="py-2 text-sm text-ink-dim">
                 {svcq ? "No matches." : "Nothing else to show."}
               </p>
             )}
-
-            {svcCollapsed && otherServices.length > SVC_LIMIT && (
-              <button
-                className="btn btn-ghost mt-3"
-                onClick={() => setSvcShowAll(true)}
-              >
-                Show all {otherServices.length}
-              </button>
-            )}
-            {!svcCollapsed && !svcq && otherServices.length > SVC_LIMIT && (
-              <button
-                className="btn btn-ghost mt-3"
-                onClick={() => setSvcShowAll(false)}
-              >
-                Show less
-              </button>
-            )}
-          </>
+          </div>
         )}
       </section>
       </div>
