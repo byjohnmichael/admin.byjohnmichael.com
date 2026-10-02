@@ -2,19 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "motion/react";
 
 const TABS = [
-  { href: "/", label: "General" },
-  { href: "/performance", label: "Performance" },
-  { href: "/mc", label: "Minecraft" },
-  { href: "/wow", label: "WoW" },
+  { href: "/", label: "general" },
+  { href: "/performance", label: "performance" },
+  { href: "/mc", label: "minecraft" },
+  { href: "/wow", label: "wow" },
 ];
 
 export default function NavTabs() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-1">
+    <nav className="flex flex-wrap gap-1">
       {TABS.map((tab) => {
         const active =
           tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
@@ -22,13 +23,21 @@ export default function NavTabs() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={`rounded-sm px-3 py-2 text-sm font-medium transition-colors ${
-              active
-                ? "bg-accent/15 text-ink ring-1 ring-inset ring-accent/40"
-                : "text-ink-dim hover:text-ink"
+            className={`term-tab relative px-3 py-2 text-sm transition-colors ${
+              active ? "text-ink" : "text-ink-dim hover:text-ink"
             }`}
+            data-active={active || undefined}
           >
             {tab.label}
+            {active && (
+              // shared layoutId: the underline slides between tabs
+              <motion.span
+                layoutId="nav-underline"
+                className="absolute inset-x-0 bottom-0 h-0.5 bg-accent"
+                style={{ boxShadow: "0 0 10px var(--accent)" }}
+                transition={{ type: "spring", stiffness: 420, damping: 34 }}
+              />
+            )}
           </Link>
         );
       })}

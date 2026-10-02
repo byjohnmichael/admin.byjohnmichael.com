@@ -33,26 +33,173 @@ body {
 
 body {
   background-color: var(--bg);
-  /* barely-there red haze at the very top, otherwise pure black */
-  background-image: radial-gradient(
-    100% 55% at 50% 0%,
-    #130910 0%,
-    var(--bg) 45%
-  );
+  /* faint CRT scanlines over a barely-there red haze at the very top */
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.018) 0 1px,
+      transparent 1px 3px
+    ),
+    radial-gradient(100% 55% at 50% 0%, #170a12 0%, var(--bg) 45%);
   background-attachment: fixed;
   color: var(--ink);
   font-family:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    var(--font-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
+
+/* ----------------------------------------------------------- terminal look */
 
 .panel {
   background-color: var(--panel);
   border: 1px solid var(--panel-border);
-  border-radius: 0.25rem;
+  border-radius: 0;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.panel:hover {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--panel-border));
+}
+
+/* Panel headings read like markdown in a terminal: "## system". The prefix
+   takes the panel's accent, so per-section colours carry through. */
+.panel h1,
+.panel h2 {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: lowercase;
+}
+.panel h1::before,
+.panel h2::before {
+  content: "## ";
+  color: var(--accent);
+}
+
+/* Monospace text is wide: let grid/flex children shrink instead of pushing
+   the page sideways on phones. */
+main .grid > *,
+main .panel {
+  min-width: 0;
+}
+
+/* performance section titles: bigger, in the section colour, softly lit */
+.panel h2.sec-title {
+  font-size: 1rem;
+  color: var(--accent);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.panel h2.sec-title::before {
+  color: color-mix(in srgb, var(--accent) 55%, #4b4350);
+}
+
+/* header prompt: [jm@byjohnmichael ~]$ <cmd>█ */
+.term-prompt {
+  color: var(--ink-dim);
+}
+.term-prompt b {
+  color: var(--accent);
+  font-weight: 500;
+}
+.term-prompt em {
+  color: #1793d1; /* Arch blue */
+  font-style: normal;
+}
+.term-typed {
+  display: inline-block;
+  vertical-align: bottom;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--ink);
+  animation: termType 0.6s steps(var(--n, 10)) both;
+}
+@keyframes termType {
+  from {
+    width: 0;
+  }
+  to {
+    width: calc(var(--n, 10) * 1ch);
+  }
+}
+.term-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  margin-left: 1px;
+  vertical-align: -0.2em;
+  background: var(--accent);
+  animation: termBlink 1.1s steps(1) infinite;
+}
+@keyframes termBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ./general ./performance … */
+.term-tab::before {
+  content: "./";
+  color: #4b4350;
+}
+.term-tab[data-active]::before {
+  color: var(--accent);
+}
+
+/* segmented block meter (general page) */
+.seg-meter {
+  position: relative;
+  height: 0.75rem;
+  overflow: hidden;
+  background: repeating-linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--panel-border) 60%, transparent) 0 6px,
+    transparent 6px 8px
+  );
+}
+.seg-meter > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--meter, var(--accent)) 0 6px,
+    transparent 6px 8px
+  );
+  filter: drop-shadow(
+    0 0 4px color-mix(in srgb, var(--meter, var(--accent)) 60%, transparent)
+  );
+  transition: width 0.8s ease;
+}
+
+/* htop-style bracket meter: [|||||       ] */
+.htop-bar {
+  color: #4b4350;
+  white-space: pre;
+}
+.htop-bar em {
+  font-style: normal;
+  color: var(--accent);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* braille spinner glyph */
+.term-spin {
+  display: inline-block;
+  width: 1ch;
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--accent);
+}
+
+/* [2] style count badge */
+.term-badge::before {
+  content: "[";
+}
+.term-badge::after {
+  content: "]";
 }
 
 .btn {
-  border-radius: 0.1875rem;
+  border-radius: 0;
+  text-transform: lowercase;
   padding: 0.5rem 0.9rem;
   font-size: 0.8rem;
   font-weight: 600;
@@ -95,9 +242,9 @@ body {
 }
 
 .input {
-  background-color: #0c0b0f;
+  background-color: #070608;
   border: 1px solid var(--panel-border);
-  border-radius: 0.1875rem;
+  border-radius: 0;
   padding: 0.5rem 0.75rem;
   color: var(--ink);
 }
@@ -105,59 +252,6 @@ body {
 .input:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
-}
-
-/* CPU status orb — a small living sphere whose colour mix tracks CPU load,
-   heat and throttling. It always breathes; the blobs inside drift on their
-   own slow cycles so it never sits still. */
-@keyframes cpuOrbBreathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.045);
-  }
-}
-@keyframes cpuOrbDriftA {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-  30% {
-    translate: 3px -4px;
-  }
-  60% {
-    translate: -4px 3px;
-  }
-}
-@keyframes cpuOrbDriftB {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-  35% {
-    translate: -4px -3px;
-  }
-  70% {
-    translate: 3px 4px;
-  }
-}
-.cpu-orb {
-  animation: cpuOrbBreathe var(--orb-dur, 6s) ease-in-out infinite;
-}
-.cpu-orb-blob-a {
-  animation: cpuOrbDriftA 8.5s ease-in-out infinite;
-}
-.cpu-orb-blob-b {
-  animation: cpuOrbDriftB 11.5s ease-in-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .cpu-orb,
-  .cpu-orb-blob-a,
-  .cpu-orb-blob-b {
-    animation: none;
-  }
 }
 
 /* The CPU panel runs its own lighter neon-blue accent, scoped so the rest of
@@ -279,6 +373,24 @@ body {
   box-shadow:
     inset 0 0 0 1px rgba(255, 138, 196, 0.1),
     0 0 46px -20px rgba(255, 138, 196, 0.4);
+}
+
+/* per-section panels glow in their own colour on hover */
+.cpu-section.panel:hover,
+.ram-section.panel:hover,
+.ssd-section.panel:hover,
+.gpu-section.panel:hover,
+.psu-section.panel:hover,
+.net-section.panel:hover,
+.os-section.panel:hover {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--panel-border));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .term-typed,
+  .term-cursor {
+    animation: none;
+  }
 }
 
 /* byjohnmichael* */

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { CountUp, SegMeter } from "@/components/term";
 
 type ServiceAction = "start" | "stop" | "restart" | "enable" | "disable";
 
@@ -161,13 +162,30 @@ function Dot({ ok }: { ok: boolean }) {
 }
 
 function Meter({ pct }: { pct: number }) {
-  const clamped = Math.max(0, Math.min(100, pct));
+  return <SegMeter pct={pct} color={pct > 85 ? "var(--danger)" : undefined} />;
+}
+
+// big headline number in a dashed box, e.g. "39.4%" over "$ memory"
+function Vital({
+  label,
+  value,
+  decimals,
+  suffix,
+}: {
+  label: string;
+  value: number;
+  decimals: number;
+  suffix?: string;
+}) {
   return (
-    <div className="h-2 w-full overflow-hidden rounded bg-panel-border">
-      <div
-        className={`h-full rounded ${clamped > 85 ? "bg-danger" : "bg-accent"}`}
-        style={{ width: `${clamped}%` }}
-      />
+    <div className="border border-dashed border-panel-border px-3 py-2.5">
+      <div className="text-2xl leading-none font-bold">
+        <CountUp value={value} decimals={decimals} suffix={suffix} />
+      </div>
+      <div className="mt-1 text-xs text-ink-dim">
+        <span className="text-ink-dim/50">$ </span>
+        {label}
+      </div>
     </div>
   );
 }
@@ -192,7 +210,8 @@ function SpecGroup({
 }) {
   return (
     <div>
-      <div className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-dim">
+      <div className="mb-1 text-xs font-semibold text-ink-dim lowercase">
+        <span className="text-accent">&gt; </span>
         {title}
       </div>
       <div className="flex flex-col gap-0.5">{children}</div>
@@ -479,6 +498,19 @@ export default function GeneralPage() {
         </div>
 
         <div className="flex flex-col gap-6">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Vital label="memory" value={memPct} decimals={1} suffix="%" />
+            {system.disk && (
+              <Vital
+                label={`disk ${system.disk.path}`}
+                value={system.disk.usePct}
+                decimals={0}
+                suffix="%"
+              />
+            )}
+            <Vital label="load 1m" value={system.load[0] ?? 0} decimals={2} />
+          </div>
+
           <div>
             <div className="mb-1 flex items-baseline justify-between text-sm">
               <span className="text-ink-dim">Memory</span>
@@ -728,10 +760,10 @@ export default function GeneralPage() {
                 <li key={todo.key}>
                   <Link
                     href={todo.href}
-                    className="flex items-center justify-between rounded-sm border border-panel-border/60 px-3 py-2 text-sm transition-colors hover:border-panel-border hover:text-ink"
+                    className="flex items-center justify-between border border-dashed border-panel-border px-3 py-2 text-sm transition-colors hover:border-panel-border hover:text-ink"
                   >
                     <span className="capitalize">{todo.label}</span>
-                    <span className="rounded bg-accent/20 px-2 py-0.5 text-xs font-semibold tabular-nums text-accent">
+                    <span className="term-badge border border-accent/60 px-1.5 py-0.5 text-xs font-bold tabular-nums text-accent">
                       {todo.count}
                     </span>
                   </Link>
