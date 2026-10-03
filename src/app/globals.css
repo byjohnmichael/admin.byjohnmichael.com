@@ -53,8 +53,13 @@ body {
     var(--font-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
-/* Ambient backdrop, painted under all content: a slow-drifting red/violet
-   glow, then a faint dot grid that fades out from the top and a vignette. */
+/* Ambient backdrop, painted under all content, back to front:
+   html::before  a red perspective grid "floor" receding to a glowing horizon
+   body::before  slow-drifting red / violet / blue glows
+   body::after   a dot grid fading out from the top, plus a vignette
+   html::after   fine film grain over the lot */
+html::before,
+html::after,
 body::before,
 body::after {
   content: "";
@@ -62,22 +67,52 @@ body::after {
   z-index: -1;
   pointer-events: none;
 }
+html::before {
+  left: -50%;
+  right: -50%;
+  bottom: 0;
+  height: 90vh;
+  background:
+    linear-gradient(to right, rgba(224, 30, 55, 0.38) 1px, transparent 1px) 0 0 /
+      56px 56px,
+    linear-gradient(to bottom, rgba(224, 30, 55, 0.38) 1px, transparent 1px) 0 0 /
+      56px 56px;
+  transform-origin: 50% 100%;
+  transform: perspective(700px) rotateX(55deg);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.55) 40%, transparent 80%);
+  mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.55) 40%, transparent 80%);
+  animation: gridScroll 5s linear infinite;
+}
 body::before {
   inset: -15%;
   background:
-    radial-gradient(38% 32% at 18% 8%, rgba(224, 30, 55, 0.16), transparent 70%),
-    radial-gradient(34% 30% at 86% 16%, rgba(130, 50, 160, 0.12), transparent 70%),
-    radial-gradient(50% 36% at 55% 108%, rgba(224, 30, 55, 0.09), transparent 70%);
-  animation: ambientDrift 48s ease-in-out infinite alternate;
+    radial-gradient(38% 34% at 16% 6%, rgba(224, 30, 55, 0.22), transparent 70%),
+    radial-gradient(34% 32% at 88% 14%, rgba(140, 50, 175, 0.18), transparent 70%),
+    radial-gradient(30% 28% at 60% 46%, rgba(23, 147, 209, 0.06), transparent 70%),
+    /* horizon glow where the grid floor fades out */
+    radial-gradient(70% 22% at 50% 66%, rgba(224, 30, 55, 0.15), transparent 70%);
+  animation: ambientDrift 40s ease-in-out infinite alternate;
 }
 body::after {
   inset: 0;
   background:
-    radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.65)),
-    radial-gradient(rgba(236, 231, 236, 0.075) 1px, transparent 1.5px) 0 0 /
+    radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.7)),
+    radial-gradient(rgba(236, 231, 236, 0.09) 1px, transparent 1.5px) 0 0 /
       22px 22px;
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.35) 70%, transparent);
-  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.35) 70%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.3) 60%, transparent 85%);
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.3) 60%, transparent 85%);
+}
+html::after {
+  inset: 0;
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@keyframes gridScroll {
+  to {
+    background-position:
+      0 56px,
+      0 56px;
+  }
 }
 @keyframes ambientDrift {
   0% {
@@ -562,6 +597,7 @@ main .panel {
 @media (prefers-reduced-motion: reduce) {
   .term-typed,
   .term-cursor,
+  html::before,
   body::before {
     animation: none;
   }
