@@ -53,12 +53,140 @@ body {
     var(--font-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
+/* Ambient backdrop, painted under all content: a slow-drifting red/violet
+   glow, then a faint dot grid that fades out from the top and a vignette. */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+}
+body::before {
+  inset: -15%;
+  background:
+    radial-gradient(38% 32% at 18% 8%, rgba(224, 30, 55, 0.16), transparent 70%),
+    radial-gradient(34% 30% at 86% 16%, rgba(130, 50, 160, 0.12), transparent 70%),
+    radial-gradient(50% 36% at 55% 108%, rgba(224, 30, 55, 0.09), transparent 70%);
+  animation: ambientDrift 48s ease-in-out infinite alternate;
+}
+body::after {
+  inset: 0;
+  background:
+    radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.65)),
+    radial-gradient(rgba(236, 231, 236, 0.075) 1px, transparent 1.5px) 0 0 /
+      22px 22px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.35) 70%, transparent);
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.35) 70%, transparent);
+}
+@keyframes ambientDrift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3%, 2%, 0) scale(1.05);
+  }
+  100% {
+    transform: translate3d(-2%, 4%, 0) scale(1.02);
+  }
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+  color: #fff;
+}
+
+/* thin terminal-style scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--panel-border) transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--panel-border);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-dim);
+}
+
+/* header: a touch of depth, and a bottom rule that glows red in the middle */
+.site-header {
+  position: relative;
+  background: linear-gradient(
+    to bottom,
+    rgba(16, 14, 19, 0.9),
+    rgba(16, 14, 19, 0.35)
+  );
+  backdrop-filter: blur(6px);
+}
+.site-header::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--accent) 70%, transparent) 30%,
+    color-mix(in srgb, var(--accent) 70%, transparent) 70%,
+    transparent
+  );
+  opacity: 0.55;
+  pointer-events: none;
+}
+
 /* ----------------------------------------------------------- terminal look */
 
+/* Panels: terminal-window corner ticks in the accent colour, a soft sheen at
+   the top edge, and an optional per-section glow (--panel-glow). */
 .panel {
-  background-color: var(--panel);
+  --tick: color-mix(in srgb, var(--accent) 60%, transparent);
+  background-color: color-mix(in srgb, var(--panel) 92%, transparent);
+  background-image:
+    linear-gradient(var(--tick), var(--tick)),
+    linear-gradient(var(--tick), var(--tick)),
+    linear-gradient(var(--tick), var(--tick)),
+    linear-gradient(var(--tick), var(--tick)),
+    linear-gradient(var(--tick), var(--tick)),
+    linear-gradient(var(--tick), var(--tick)),
+    linear-gradient(var(--tick), var(--tick)),
+    linear-gradient(var(--tick), var(--tick)),
+    var(--panel-glow, linear-gradient(transparent, transparent)),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025), transparent 120px);
+  background-size:
+    10px 2px,
+    2px 10px,
+    10px 2px,
+    2px 10px,
+    10px 2px,
+    2px 10px,
+    10px 2px,
+    2px 10px,
+    100% 100%,
+    100% 100%;
+  background-position:
+    top left,
+    top left,
+    top right,
+    top right,
+    bottom left,
+    bottom left,
+    bottom right,
+    bottom right,
+    0 0,
+    0 0;
+  background-repeat: no-repeat;
   border: 1px solid var(--panel-border);
   border-radius: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 18px 40px -28px rgba(0, 0, 0, 0.9);
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
@@ -66,6 +194,10 @@ body {
 
 .panel:hover {
   border-color: color-mix(in srgb, var(--accent) 35%, var(--panel-border));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 18px 40px -28px rgba(0, 0, 0, 0.9),
+    0 0 40px -24px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
 /* Panel headings read like markdown in a terminal: "## system". The prefix
@@ -265,6 +397,7 @@ main .panel {
 
 .btn-ghost:hover {
   border-color: var(--accent-dim);
+  background-color: color-mix(in srgb, var(--accent) 7%, transparent);
 }
 
 .input {
@@ -275,9 +408,23 @@ main .panel {
   color: var(--ink);
 }
 
+.input {
+  box-shadow: inset 0 1px 6px rgba(0, 0, 0, 0.6);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.input:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--panel-border));
+}
+
 .input:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+  box-shadow:
+    inset 0 1px 6px rgba(0, 0, 0, 0.6),
+    0 0 18px -6px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
 /* The CPU panel runs its own lighter neon-blue accent, scoped so the rest of
@@ -289,7 +436,7 @@ main .panel {
   --panel-border: #1b3646;
 }
 .cpu-section.panel {
-  background-image: radial-gradient(
+  --panel-glow: radial-gradient(
     130% 90% at 50% -12%,
     rgba(74, 200, 255, 0.07),
     transparent 55%
@@ -306,7 +453,7 @@ main .panel {
   --panel-border: #4a3320;
 }
 .ram-section.panel {
-  background-image: radial-gradient(
+  --panel-glow: radial-gradient(
     130% 90% at 50% -12%,
     rgba(255, 158, 87, 0.07),
     transparent 55%
@@ -323,7 +470,7 @@ main .panel {
   --panel-border: #4a2028;
 }
 .ssd-section.panel {
-  background-image: radial-gradient(
+  --panel-glow: radial-gradient(
     130% 90% at 50% -12%,
     rgba(255, 92, 114, 0.07),
     transparent 55%
@@ -340,7 +487,7 @@ main .panel {
   --panel-border: #1e4530;
 }
 .gpu-section.panel {
-  background-image: radial-gradient(
+  --panel-glow: radial-gradient(
     130% 90% at 50% -12%,
     rgba(94, 240, 138, 0.07),
     transparent 55%
@@ -357,7 +504,7 @@ main .panel {
   --panel-border: #4a4320;
 }
 .psu-section.panel {
-  background-image: radial-gradient(
+  --panel-glow: radial-gradient(
     130% 90% at 50% -12%,
     rgba(255, 225, 77, 0.07),
     transparent 55%
@@ -374,7 +521,7 @@ main .panel {
   --panel-border: #392a4d;
 }
 .net-section.panel {
-  background-image: radial-gradient(
+  --panel-glow: radial-gradient(
     130% 90% at 50% -12%,
     rgba(192, 140, 255, 0.07),
     transparent 55%
@@ -391,7 +538,7 @@ main .panel {
   --panel-border: #4a2a3c;
 }
 .os-section.panel {
-  background-image: radial-gradient(
+  --panel-glow: radial-gradient(
     130% 90% at 50% -12%,
     rgba(255, 138, 196, 0.07),
     transparent 55%
@@ -414,7 +561,8 @@ main .panel {
 
 @media (prefers-reduced-motion: reduce) {
   .term-typed,
-  .term-cursor {
+  .term-cursor,
+  body::before {
     animation: none;
   }
 }
@@ -536,6 +684,7 @@ main .panel {
   gap: 10px;
   padding: 14px;
   transform-origin: bottom right;
+  background-color: var(--panel);
   box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.9);
 }
 .bob-pop-head {

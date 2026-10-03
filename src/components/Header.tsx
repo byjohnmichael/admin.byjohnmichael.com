@@ -23,7 +23,7 @@ export default function Header() {
     )?.cmd ?? "";
 
   return (
-    <header className="flex flex-wrap items-center gap-x-6 gap-y-1 border-b border-panel-border px-4 pt-3 sm:px-6 sm:pt-4">
+    <header className="site-header flex flex-wrap items-center gap-x-6 gap-y-1 border-b border-panel-border px-4 pt-3 sm:px-6 sm:pt-4">
       <span className="term-prompt order-1 min-w-0 flex-1 overflow-hidden text-sm text-ellipsis whitespace-nowrap">
         [<b>jm</b>@<em>byjohnmichael</em> ~]${" "}
         {/* keyed by route so the typing animation replays on navigation */}
