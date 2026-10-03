@@ -90,7 +90,7 @@ export default function FloatingBob() {
         whileTap={{ scale: 0.94 }}
       >
         {reading ? (
-          <Orb reading={reading} size={64} />
+          <Orb reading={reading} size={84} />
         ) : (
           <span className="bob-orb-placeholder" aria-hidden />
         )}

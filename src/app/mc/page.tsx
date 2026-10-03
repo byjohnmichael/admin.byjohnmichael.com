@@ -528,9 +528,6 @@ export default function McPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* TPS / tick time, Spark reports and backups (moved from Performance) */}
-      <McServerPanel />
-
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="panel p-6">
           <h2 className="mb-4 text-base font-semibold">Players</h2>
@@ -1218,6 +1215,9 @@ export default function McPage() {
           </div>
         )}
       </section>
+
+      {/* server health (TPS / tick time, Spark reports) and backups */}
+      <McServerPanel />
     </div>
   );
 }
