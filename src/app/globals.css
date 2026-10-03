@@ -53,47 +53,98 @@ body {
     var(--font-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
-/* Ambient backdrop, painted under all content, back to front:
-   html::before  a red perspective grid "floor" receding to a glowing horizon
-   body::before  slow-drifting red / violet / blue glows
-   body::after   a dot grid fading out from the top, plus a vignette
-   html::after   fine film grain over the lot */
-html::before,
-html::after,
-body::before,
-body::after {
-  content: "";
+/* -------------------------------------------------------------- backdrop */
+
+/* Animated backdrop (components/Backdrop.tsx), fixed behind all content.
+   Layers, back to front: glows, horizon, grid floor, embers, scan beam,
+   dot grid + vignette, film grain. Only the floor animates a background;
+   everything else moves by transform/opacity alone. */
+.backdrop {
   position: fixed;
+  inset: 0;
   z-index: -1;
+  overflow: hidden;
   pointer-events: none;
 }
-html::before {
+.backdrop > * {
+  position: absolute;
+}
+
+.bd-glow {
+  inset: -15%;
+  background:
+    radial-gradient(38% 34% at 16% 6%, rgba(224, 30, 55, 0.22), transparent 70%),
+    radial-gradient(34% 32% at 88% 14%, rgba(140, 50, 175, 0.18), transparent 70%),
+    radial-gradient(30% 28% at 60% 46%, rgba(23, 147, 209, 0.06), transparent 70%);
+  animation: bdDrift 30s ease-in-out infinite alternate;
+}
+
+/* glow where the floor fades out; breathes slowly */
+.bd-horizon {
+  left: -10%;
+  right: -10%;
+  top: 48%;
+  height: 34%;
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    rgba(224, 30, 55, 0.2),
+    transparent 70%
+  );
+  animation: bdPulse 7s ease-in-out infinite;
+}
+
+/* The floor is a wide plane tilted away from the viewer, fading out toward
+   the horizon. It slides one cell toward the viewer per loop, so the grid
+   seems to scroll forever. */
+.bd-floor {
   left: -50%;
   right: -50%;
   bottom: 0;
   height: 90vh;
   background:
-    linear-gradient(to right, rgba(224, 30, 55, 0.38) 1px, transparent 1px) 0 0 /
+    linear-gradient(to right, rgba(224, 30, 55, 0.4) 1px, transparent 1px) 0 0 /
       56px 56px,
-    linear-gradient(to bottom, rgba(224, 30, 55, 0.38) 1px, transparent 1px) 0 0 /
+    linear-gradient(to bottom, rgba(224, 30, 55, 0.4) 1px, transparent 1px) 0 0 /
       56px 56px;
   transform-origin: 50% 100%;
   transform: perspective(700px) rotateX(55deg);
   -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.55) 40%, transparent 80%);
   mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.55) 40%, transparent 80%);
-  animation: gridScroll 5s linear infinite;
+  animation: bdFloor 2.4s linear infinite;
 }
-body::before {
-  inset: -15%;
-  background:
-    radial-gradient(38% 34% at 16% 6%, rgba(224, 30, 55, 0.22), transparent 70%),
-    radial-gradient(34% 32% at 88% 14%, rgba(140, 50, 175, 0.18), transparent 70%),
-    radial-gradient(30% 28% at 60% 46%, rgba(23, 147, 209, 0.06), transparent 70%),
-    /* horizon glow where the grid floor fades out */
-    radial-gradient(70% 22% at 50% 66%, rgba(224, 30, 55, 0.15), transparent 70%);
-  animation: ambientDrift 40s ease-in-out infinite alternate;
+
+.bd-embers {
+  inset: 0;
 }
-body::after {
+.bd-embers > i {
+  position: absolute;
+  bottom: 12%;
+  border-radius: 999px;
+  background: #ff7085;
+  box-shadow: 0 0 8px 2px rgba(255, 70, 95, 0.75);
+  opacity: 0;
+  animation-name: bdEmber;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* CRT sweep: a soft band of light rolling down the screen */
+.bd-beam {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 220px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 90, 110, 0.03) 60%,
+    rgba(255, 110, 130, 0.07) 88%,
+    transparent
+  );
+  animation: bdBeam 9s linear infinite;
+}
+
+.bd-dots {
   inset: 0;
   background:
     radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.7)),
@@ -102,27 +153,75 @@ body::after {
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.3) 60%, transparent 85%);
   mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.3) 60%, transparent 85%);
 }
-html::after {
+
+.bd-grain {
   inset: 0;
   opacity: 0.07;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-@keyframes gridScroll {
+
+@keyframes bdDrift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4%, 3%, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-3%, 5%, 0) scale(1.03);
+  }
+}
+@keyframes bdPulse {
+  0%,
+  100% {
+    opacity: 0.65;
+    transform: scaleX(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.08);
+  }
+}
+@keyframes bdFloor {
   to {
     background-position:
       0 56px,
       0 56px;
   }
 }
-@keyframes ambientDrift {
+@keyframes bdEmber {
   0% {
-    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
   }
-  50% {
-    transform: translate3d(3%, 2%, 0) scale(1.05);
+  10% {
+    opacity: 0.9;
+  }
+  70% {
+    opacity: 0.5;
   }
   100% {
-    transform: translate3d(-2%, 4%, 0) scale(1.02);
+    opacity: 0;
+    transform: translate3d(var(--drift, 0), -70vh, 0);
+  }
+}
+@keyframes bdBeam {
+  from {
+    transform: translateY(-240px);
+  }
+  to {
+    transform: translateY(100vh);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop *,
+  .backdrop > .bd-embers > i {
+    animation: none;
+  }
+  .bd-beam,
+  .bd-embers {
+    display: none;
   }
 }
 
@@ -596,9 +695,7 @@ main .panel {
 
 @media (prefers-reduced-motion: reduce) {
   .term-typed,
-  .term-cursor,
-  html::before,
-  body::before {
+  .term-cursor {
     animation: none;
   }
 }
