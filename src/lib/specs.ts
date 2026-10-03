@@ -2,6 +2,7 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { promises as fs } from "fs";
 import os from "os";
+import { readAmdGpus } from "@/lib/amdGpu";
 
 const execFileAsync = promisify(execFile);
 
@@ -292,6 +293,20 @@ async function readBios(): Promise<Specs["bios"]> {
 }
 
 async function readGpus(): Promise<Specs["gpus"]> {
+  const [nvidia, amd] = await Promise.all([readNvidiaGpus(), readAmdGpus()]);
+  return [
+    ...nvidia,
+    ...amd.map((g) => ({
+      name: g.name,
+      memory: g.memTotalBytes ? `${Math.round(g.memTotalBytes / 1024 / 1024)} MiB` : "",
+      driver: g.driver,
+      vbios: g.vbios || null,
+      pcie: g.pcieGenMax ? `PCIe ${g.pcieGenMax}.0${g.pcieWidthMax ? ` x${g.pcieWidthMax}` : ""}` : null,
+    })),
+  ];
+}
+
+async function readNvidiaGpus(): Promise<Specs["gpus"]> {
   const out = await run("nvidia-smi", [
     "--query-gpu=name,memory.total,driver_version,vbios_version,pcie.link.gen.max,pcie.link.width.max",
     "--format=csv,noheader",

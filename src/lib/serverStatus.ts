@@ -1,6 +1,6 @@
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { promises as fs } from "fs";
+import { promises as fs, readFileSync } from "fs";
 import os from "os";
 import path from "path";
 import { runRcon } from "@/lib/rcon";
@@ -22,12 +22,22 @@ const WOW_DB_CONTAINER =
 const WOW_DB_USER = process.env.WOW_DB_USER ?? "mangos";
 const WOW_DB_PASSWORD = process.env.WOW_DB_PASSWORD ?? "mangos";
 
-// systemd units for the three Next.js sites, shown as up/down dots.
-const SITE_UNITS: { name: string; label: string; unit: string }[] = [
+// systemd units for the hosted sites, shown as up/down dots. Override with
+// SITE_UNITS="example.com=example-site.service,other.org=other.service".
+const DEFAULT_SITE_UNITS: { name: string; label: string; unit: string }[] = [
   { name: "admin", label: "admin.byjohnmichael.com", unit: "admin-site.service" },
   { name: "mc", label: "mc.byjohnmichael.com", unit: "mc-site.service" },
   { name: "wow", label: "wow.byjohnmichael.com", unit: "wow-site.service" },
 ];
+const SITE_UNITS = process.env.SITE_UNITS
+  ? process.env.SITE_UNITS.split(",")
+      .map((raw) => raw.trim())
+      .filter((raw) => raw.includes("="))
+      .map((raw) => {
+        const [label, unit] = raw.split("=").map((x) => x.trim());
+        return { name: label.split(".")[0] || label, label, unit };
+      })
+  : DEFAULT_SITE_UNITS;
 
 // This app's own unit — stop/restart on it must be deferred so the HTTP
 // response can flush before the process goes away.
@@ -549,7 +559,7 @@ type ServerDef = {
   procNames?: string[];
 };
 
-const PERF_SERVERS: ServerDef[] = [
+const DEFAULT_PERF_SERVERS: ServerDef[] = [
   {
     key: "minecraft",
     label: "Minecraft",
@@ -584,6 +594,33 @@ const PERF_SERVERS: ServerDef[] = [
     unit: "vpn.service",
   },
 ];
+
+// The servers listed (and startable/stoppable) on the Performance page.
+// Point ADMIN_SERVERS_FILE at a JSON array of the same shape as the default
+// list above to describe a different machine without touching code.
+function loadPerfServers(): ServerDef[] {
+  const file = process.env.ADMIN_SERVERS_FILE;
+  if (!file) return DEFAULT_PERF_SERVERS;
+  try {
+    const parsed = JSON.parse(readFileSync(file, "utf8"));
+    const ok =
+      Array.isArray(parsed) &&
+      parsed.every(
+        (d) =>
+          d &&
+          typeof d.key === "string" &&
+          typeof d.label === "string" &&
+          (d.unit === undefined || typeof d.unit === "string") &&
+          (d.composeFile === undefined || typeof d.composeFile === "string"),
+      );
+    if (ok) return parsed as ServerDef[];
+    console.error(`[servers] ${file}: expected an array of {key, label, unit?|composeFile?, …}; using defaults`);
+  } catch (err) {
+    console.error(`[servers] couldn't read ${file}: ${(err as Error).message}; using defaults`);
+  }
+  return DEFAULT_PERF_SERVERS;
+}
+const PERF_SERVERS = loadPerfServers();
 
 export type PerfServer = {
   key: string;

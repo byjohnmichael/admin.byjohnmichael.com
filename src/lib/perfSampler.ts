@@ -4,6 +4,7 @@ import { promisify } from "util";
 import os from "os";
 import path from "path";
 import { getSpecs } from "@/lib/specs";
+import { readAmdGpus } from "@/lib/amdGpu";
 
 const execFileAsync = promisify(execFile);
 
@@ -864,10 +865,16 @@ function decodeThrottle(hex: string): string {
   return on.join(" · ");
 }
 
+/** Every GPU: NVIDIA cards via nvidia-smi, then AMD cards via amdgpu sysfs. */
+async function readGpu(): Promise<GpuInfo[]> {
+  const nvidia = await readNvidiaGpus();
+  return [...nvidia, ...(await readAmdGpus(nvidia.length))];
+}
+
 /** NVIDIA GPUs via `nvidia-smi`. Returns [] when there's no tool or no card;
  * fields the card doesn't report (e.g. power draw on a GTX 1050 Ti) come back
  * as null. */
-async function readGpu(): Promise<GpuInfo[]> {
+async function readNvidiaGpus(): Promise<GpuInfo[]> {
   try {
     const { stdout } = await execFileAsync(
       NVIDIA_SMI,
@@ -1301,12 +1308,17 @@ function estimatePower(
   const dram = dramW ?? 2;
   add("dram", "DRAM", "measured", dram * 0.95, dram * 1.05);
 
-  // estimate — GPU from utilisation vs TDP (no telemetry on many cards)
-  if (gpu) {
+  // GPU: the card's own power reading when it reports one (most NVIDIA cards
+  // and amdgpu), else an estimate from utilisation vs TDP
+  if (gpu && gpu.powerDrawW != null) {
+    add("gpu", "GPU", "measured", gpu.powerDrawW * 0.95, gpu.powerDrawW * 1.05);
+  } else if (gpu) {
     const tdp = gpu.powerLimitW ?? 75;
     const idle = PWR.gpuIdleW;
     const util = gpu.utilPct ?? 0;
-    const idling = util < 3 && /P(8|10|12|15)/.test((gpu.pstate ?? "").toUpperCase());
+    // NVIDIA idles in P8+; amdgpu has no P-states, so low utilisation alone counts
+    const nvidiaIdle = /P(8|10|12|15)/.test((gpu.pstate ?? "").toUpperCase());
+    const idling = util < 3 && (nvidiaIdle || !/^P\d+$/i.test(gpu.pstate ?? ""));
     if (idling) add("gpu", "GPU", "estimate", 4, idle + 3);
     else {
       const base = idle + (util / 100) * (tdp - idle);
