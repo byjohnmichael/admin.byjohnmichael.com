@@ -164,8 +164,8 @@ commands and file writes run immediately or wait for your Allow/Deny.
 
 Everything machine-specific comes from environment variables, so a
 different box (or a swapped part) mostly needs a different env file, not
-code changes. Hardware is detected at runtime: CPU (any vendor), cores and
-threads, memory slots (`dmidecode`), disks and filesystems, network
+code changes. Hardware is detected at runtime: CPU (any vendor), GPU (NVIDIA or AMD),
+cores and threads, memory slots (`dmidecode`), disks and filesystems, network
 interfaces, temperatures (hwmon) and NVMe health (`nvme-cli`). Swapping a
 CPU, RAM, a drive or a NIC is picked up automatically after a restart.
 
@@ -189,7 +189,7 @@ CPU, RAM, a drive or a NIC is picked up automatically after a restart.
 | `WOW_*_CONTAINER`, `WOW_DB_USER`, `WOW_DB_PASSWORD` | `wow-wotlk-*-1`, `mangos` | WoW containers and DB login |
 | `WOW_SITE_DATA_DIR` | `/var/www/wow.byjohnmichael.com/wow-site-data` | Shared data with wow.byjohnmichael.com |
 | `PERF_NET_IFACE` / `PERF_DISK_DEV` | auto | Pin the interface / disk the graphs follow |
-| `PERF_NVIDIA_SMI` | `nvidia-smi` | GPU stats binary |
+| `PERF_NVIDIA_SMI` | `nvidia-smi` | NVIDIA GPU stats binary (AMD needs nothing) |
 | `PERF_RAPL_PATH` / `PERF_RAPL_DRAM_PATH` | `intel-rapl:0` / auto | CPU / DRAM power counters (also used on AMD) |
 | `PERF_FAN_COUNT` | `3` | Fans in the PSU power estimate |
 | `PERF_DISABLE_PERF` | — | `1` turns off `perf stat` (IPC / cycles) |
@@ -206,7 +206,7 @@ CPU, RAM, a drive or a NIC is picked up automatically after a restart.
 
 ### What's still tied to this setup
 
-- **GPU: NVIDIA only.** GPU stats come from `nvidia-smi`. With an AMD or Intel GPU the GPU panels show "No GPU detected"; the rest of the site works.
+- **GPU: NVIDIA and AMD.** NVIDIA cards are read with `nvidia-smi`; AMD cards straight from the `amdgpu` driver in sysfs (no extra tools; `lspci` from pciutils gives them a proper name). Intel GPUs aren't supported yet and show "No GPU detected"; the rest of the site works.
 - **Games run in Docker** under the container names above. A server run some other way needs its env vars (and possibly code) adjusted.
 - **Default paths disagree in two places.** If these variables aren't set, different parts of the app fall back to different folders, so **set both explicitly**:
   - `SITE_DATA_DIR` defaults to `/var/www/mc-site-data` in `store.ts` but `/var/www/mc.byjohnmichael.com/mc-site-data` in `bluemapMarkers.ts`.

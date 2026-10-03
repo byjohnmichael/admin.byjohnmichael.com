@@ -1565,21 +1565,30 @@ export default function PerformancePage() {
                   k="Memory-controller util"
                   v={`${(g0.memUtilPct ?? 0).toFixed(0)}%`}
                 />
+                {/* encoder/decoder stats are NVIDIA-only; hide them for AMD */}
+                {(g0.encUtilPct != null || g0.decUtilPct != null) && (
+                  <>
+                    <KV
+                      k="NVENC (encode)"
+                      v={
+                        g0.encUtilPct != null
+                          ? `${g0.encUtilPct.toFixed(0)}%${
+                              g0.encSessions ? ` · ${g0.encSessions} sess` : ""
+                            }`
+                          : "—"
+                      }
+                    />
+                    <KV
+                      k="NVDEC (decode)"
+                      v={g0.decUtilPct != null ? `${g0.decUtilPct.toFixed(0)}%` : "—"}
+                    />
+                  </>
+                )}
+                {/* NVIDIA reports P0–P15; amdgpu reports its DPM performance level */}
                 <KV
-                  k="NVENC (encode)"
-                  v={
-                    g0.encUtilPct != null
-                      ? `${g0.encUtilPct.toFixed(0)}%${
-                          g0.encSessions ? ` · ${g0.encSessions} sess` : ""
-                        }`
-                      : "—"
-                  }
+                  k={/^P\d+$/i.test(g0.pstate) || !g0.pstate ? "P-state" : "Perf level"}
+                  v={g0.pstate || "—"}
                 />
-                <KV
-                  k="NVDEC (decode)"
-                  v={g0.decUtilPct != null ? `${g0.decUtilPct.toFixed(0)}%` : "—"}
-                />
-                <KV k="P-state" v={g0.pstate || "—"} />
                 <KV k="PCIe link" v={pcieStr(g0.pcieGenCur, g0.pcieWidthCur)} />
                 {g0.throttle && (
                   <KV k="Throttling" v={g0.throttle} color="#ff5a5f" />
