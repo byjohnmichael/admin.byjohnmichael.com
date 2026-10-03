@@ -9,6 +9,7 @@ import FullscreenButton from "./FullscreenButton";
 const PROMPT_CMD: { prefix: string; cmd: string }[] = [
   { prefix: "/performance", cmd: "btop" },
   { prefix: "/monitor", cmd: "watch -n2 status" },
+  { prefix: "/terminal", cmd: "hyprctl dispatch exec kitty" },
   { prefix: "/mc", cmd: "rcon-cli list" },
   { prefix: "/wow", cmd: "docker ps --filter name=wow" },
   { prefix: "/", cmd: "systemctl status --all" },

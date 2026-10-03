@@ -61,7 +61,9 @@ export default function FloatingBob() {
   const status = reading?.mood ?? "connecting";
 
   return (
-    <div className="bob-dock">
+    // hidden (not unmounted) on ./terminal, where he'd cover a shell — the
+    // chat keeps its conversation for when you come back
+    <div className="bob-dock" hidden={pathname === "/terminal"}>
       {opened && (
         <motion.div
           className="bob-pop panel"

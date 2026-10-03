@@ -8,6 +8,7 @@ const TABS = [
   { href: "/", label: "overview" },
   { href: "/performance", label: "performance" },
   { href: "/monitor", label: "monitor" },
+  { href: "/terminal", label: "terminal" },
   { href: "/mc", label: "minecraft" },
   { href: "/wow", label: "wow" },
 ];
