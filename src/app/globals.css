@@ -529,6 +529,21 @@ main .panel {
   color: var(--ink);
 }
 
+/* square icon-only button, same height as a text .btn */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  line-height: 0;
+}
+.btn-icon svg {
+  transition: transform 0.15s ease;
+}
+.btn-icon:hover svg {
+  transform: scale(1.12);
+}
+
 .btn-ghost:hover {
   border-color: var(--accent-dim);
   background-color: color-mix(in srgb, var(--accent) 7%, transparent);
@@ -772,6 +787,100 @@ main .panel {
 @media (prefers-reduced-motion: reduce) {
   .live-dot {
     animation: none;
+  }
+}
+
+/* --------------------------------------------------------------- terminal */
+
+/* The workspace fills the screen under the header, like the monitor page. */
+.term-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: calc(100dvh - 96px - 4rem);
+  min-height: 420px;
+}
+.term-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.term-bar h2 {
+  margin: 0;
+}
+.btn-icon:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Hyprland-style tiling: fixed 2×2 grid, each tile placed by grid-area. */
+.term-tiles {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.term-tile {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: #0a080c;
+  border: 2px solid #2a1f29;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+/* active window: Hyprland's gradient border, in the site's red → violet */
+.term-tile[data-focused] {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(#0a080c, #0a080c) padding-box,
+    linear-gradient(135deg, var(--accent), #8c32af) border-box;
+  box-shadow: 0 0 28px -10px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.term-tile-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.7rem;
+  color: var(--ink-dim);
+  border-bottom: 1px solid #1d1620;
+}
+.term-tile:not([data-focused]) .term-tile-head .text-accent {
+  color: #4b4350;
+}
+.term-host {
+  flex: 1;
+  min-height: 0;
+  padding: 6px 0 0 8px;
+}
+.term-host .xterm,
+.term-host .xterm-viewport {
+  height: 100%;
+}
+.term-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  border: 1px dashed var(--panel-border);
+}
+
+/* Phones: tiles stack top to bottom instead of splitting sideways. */
+@media (max-width: 767px) {
+  .term-tiles {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-auto-rows: minmax(0, 1fr);
+  }
+  .term-tile {
+    grid-area: auto !important;
   }
 }
 
