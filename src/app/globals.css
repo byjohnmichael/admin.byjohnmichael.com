@@ -529,6 +529,21 @@ main .panel {
   color: var(--ink);
 }
 
+/* square icon-only button, same height as a text .btn */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  line-height: 0;
+}
+.btn-icon svg {
+  transition: transform 0.15s ease;
+}
+.btn-icon:hover svg {
+  transform: scale(1.12);
+}
+
 .btn-ghost:hover {
   border-color: var(--accent-dim);
   background-color: color-mix(in srgb, var(--accent) 7%, transparent);

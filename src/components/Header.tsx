@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import NavTabs from "./NavTabs";
 import LogoutButton from "./LogoutButton";
+import FullscreenButton from "./FullscreenButton";
 
 // The command "typed" into the header prompt for each section.
 const PROMPT_CMD: { prefix: string; cmd: string }[] = [
@@ -40,7 +41,8 @@ export default function Header() {
       <div className="order-3 w-full">
         <NavTabs />
       </div>
-      <div className="order-2 ml-auto">
+      <div className="order-2 ml-auto flex items-stretch gap-2">
+        <FullscreenButton />
         <LogoutButton />
       </div>
     </header>
