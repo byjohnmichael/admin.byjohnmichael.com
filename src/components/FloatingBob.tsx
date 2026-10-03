@@ -7,16 +7,32 @@
 // /ws on this same origin — nginx proxies it to the backend and only lets it
 // through for a logged-in admin (see README → Bob the Orb).
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
 import { ChatPanel, Orb, createClaudeCodeAdapter } from "bob-the-orb";
 import { bobReading } from "@/lib/perf/orbs";
 import { usePerf } from "@/lib/perf/usePerf";
 
+// phones keep the smaller orb so he doesn't cover content
+const PHONE_QUERY = "(max-width: 639px)";
+function subscribePhone(onChange: () => void) {
+  const mq = window.matchMedia(PHONE_QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+}
+function useIsPhone(): boolean {
+  return useSyncExternalStore(
+    subscribePhone,
+    () => window.matchMedia(PHONE_QUERY).matches,
+    () => false,
+  );
+}
+
 export default function FloatingBob() {
   const pathname = usePathname();
   const perf = usePerf();
+  const isPhone = useIsPhone();
   const [open, setOpen] = useState(false);
   // the chat mounts on first open and then stays mounted (just hidden), so
   // closing and reopening keeps the connection and the conversation
@@ -90,7 +106,7 @@ export default function FloatingBob() {
         whileTap={{ scale: 0.94 }}
       >
         {reading ? (
-          <Orb reading={reading} size={64} />
+          <Orb reading={reading} size={isPhone ? 64 : 84} />
         ) : (
           <span className="bob-orb-placeholder" aria-hidden />
         )}

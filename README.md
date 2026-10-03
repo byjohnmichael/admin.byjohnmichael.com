@@ -17,7 +17,7 @@ npm run bob          # Bob's chat backend (normally a systemd service)
 
 | Tab | What it shows |
 | --- | --- |
-| `./overview` | System, specs, services (start/stop/pin), to-dos, quick server status, reboot |
+| `./overview` | System, specs, services (start/stop/pin), to-dos, quick server status, packages (pacman), reboot |
 | `./performance` | Per-component detail: CPU, RAM, SSD, GPU, PSU, NET, OS + processes, each in its own colour |
 | `./monitor` | Every component's vitals plus Minecraft/WoW status on one screen, sized for 1920×1080 |
 | `./minecraft` | Server health (TPS, tick time, Spark reports, backups), players, whitelist and location requests, BlueMap markers, trailers |
@@ -160,6 +160,22 @@ return **401**, not a WebSocket upgrade.
 Inside the chat, the **Auto / Manual** toggle decides whether Bob's shell
 commands and file writes run immediately or wait for your Allow/Deny.
 
+## Packages panel
+
+The Overview's **packages** panel is read-only: it shows whether a system
+update is worth doing, never runs one.
+
+- **Severity:**
+  - **up to date** when nothing is pending.
+  - **not needed** for a few routine updates.
+  - **suggested** at 20+ updates, any core package pending (`linux*`, `glibc`, `systemd`, `openssl`, `openssh`, `sudo`, `pacman`, `gnutls`), or more than 7 days since the last full `pacman -Syu`.
+  - **needed** at 80+ updates, or updates pending and no full upgrade in over 30 days.
+
+  The reasons are listed under the badge. Thresholds live at the top of `src/lib/packages.ts`.
+- **Update checks:** pending updates come from `checkupdates`, which needs **`pacman-contrib`** (`sudo pacman -S pacman-contrib`). It syncs into a temporary database, so checking never touches the system's own. Results are cached for 15 minutes; "check again" refreshes at most once a minute. Without `pacman-contrib` the panel falls back to `pacman -Qu`, which only knows what the last manual sync saw.
+- **Installed list:** every installed package (`pacman -Q`), filterable. Explicitly installed packages are shown brighter.
+- **Other systems:** on a non-Arch system the panel says pacman wasn't found.
+
 ## Configuration
 
 Everything machine-specific comes from environment variables, so a
@@ -193,6 +209,7 @@ CPU, RAM, a drive or a NIC is picked up automatically after a restart.
 | `PERF_RAPL_PATH` / `PERF_RAPL_DRAM_PATH` | `intel-rapl:0` / auto | CPU / DRAM power counters (also used on AMD) |
 | `PERF_FAN_COUNT` | `3` | Fans in the PSU power estimate |
 | `PERF_DISABLE_PERF` | — | `1` turns off `perf stat` (IPC / cycles) |
+| `PACMAN_LOG` / `PACMAN_LOCK` | `/var/log/pacman.log` / `/var/lib/pacman/db.lck` | Last full upgrade time / "busy" indicator |
 
 `ADMIN_SERVERS_FILE` example:
 

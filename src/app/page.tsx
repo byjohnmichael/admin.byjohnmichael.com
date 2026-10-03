@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CountUp, SegMeter } from "@/components/term";
+import PackagesPanel from "@/components/PackagesPanel";
 
 type ServiceAction = "start" | "stop" | "restart" | "enable" | "disable";
 
@@ -828,6 +829,9 @@ export default function GeneralPage() {
             </div>
           </div>
         </section>
+
+        {/* pacman: update severity, pending updates, installed packages */}
+        <PackagesPanel className="max-lg:order-5" />
 
         <section className="panel border-danger/40 p-6 max-lg:order-6">
           <h2 className="mb-1 text-base font-semibold">Reboot server</h2>
