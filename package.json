@@ -6,15 +6,22 @@
     "dev": "next dev -p 3100",
     "build": "next build",
     "start": "next start -p 3100",
-    "lint": "eslint"
+    "lint": "eslint",
+    "bob": "bob-the-orb-server"
   },
   "dependencies": {
-    "bob-the-orb": "file:../bob-the-orb",
+    "@number-flow/react": "^0.6.2",
+    "@visx/group": "^4.0.1-alpha.0",
+    "@visx/responsive": "^4.0.1-alpha.0",
+    "@visx/shape": "^4.0.1-alpha.0",
+    "bob-the-orb": "github:byjohnmichael/bob-the-orb",
+    "clsx": "^2.1.1",
     "motion": "^12.43.0",
     "next": "16.3.3",
     "prismarine-nbt": "^2.8.0",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

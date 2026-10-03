@@ -18,12 +18,30 @@ export function SegMeter({ pct, color }: { pct: number; color?: string }) {
   );
 }
 
-/** htop-style bracket meter: [|||||       ]. `width` is in characters. */
-export function HtopMeter({ pct, width = 14 }: { pct: number; width?: number }) {
+/** htop-style bracket meter: [|||||       ]. `width` is in characters;
+ *  `color` overrides the panel accent for the bars. */
+export function HtopMeter({
+  pct,
+  width = 14,
+  color,
+}: {
+  pct: number;
+  width?: number;
+  color?: string;
+}) {
   const n = Math.round((Math.max(0, Math.min(100, pct)) / 100) * width);
   return (
     <span className="htop-bar" aria-hidden>
-      [<em>{"|".repeat(n)}</em>
+      [
+      <em
+        style={
+          color
+            ? { color, textShadow: `0 0 6px color-mix(in srgb, ${color} 45%, transparent)` }
+            : undefined
+        }
+      >
+        {"|".repeat(n)}
+      </em>
       {" ".repeat(width - n)}]
     </span>
   );

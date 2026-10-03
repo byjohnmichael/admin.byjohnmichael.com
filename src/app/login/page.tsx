@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -18,7 +19,7 @@ export default function LoginPage() {
       const response = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ username, password }),
       });
 
       if (!response.ok) {
@@ -43,15 +44,33 @@ export default function LoginPage() {
         className="panel flex w-full max-w-sm flex-col gap-4 p-8"
       >
         <h1 className="text-lg font-semibold">Admin login</h1>
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="Password"
-          autoFocus
-          required
-          className="input"
-        />
+        <p className="-mt-2 text-xs text-ink-dim">Sign in with your account on the server.</p>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-ink-dim">username</span>
+          <input
+            name="username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            autoFocus
+            required
+            className="input"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-ink-dim">password</span>
+          <input
+            type="password"
+            name="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
+            required
+            className="input"
+          />
+        </label>
         <button
           type="submit"
           disabled={submitting}

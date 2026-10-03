@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  SESSION_COOKIE,
-  checkPassword,
-  createSessionCookieValue,
-} from "@/lib/auth";
+import { SESSION_COOKIE, SESSION_TTL_MS, createSessionCookieValue } from "@/lib/auth";
+import { verifySystemLogin } from "@/lib/systemAuth";
 import {
   checkRateLimit,
   recordFailure,
@@ -31,27 +28,43 @@ export async function POST(request: Request) {
     );
   }
 
+  let username: unknown;
   let password: unknown;
   try {
     const body = await request.json();
+    username = body?.username;
     password = body?.password;
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
+  if (typeof username !== "string" || typeof password !== "string") {
+    return NextResponse.json({ error: "Enter a username and password." }, { status: 400 });
+  }
 
-  if (typeof password !== "string" || !checkPassword(password)) {
+  const result = await verifySystemLogin(username.trim().toLowerCase(), password);
+  if (!result.ok) {
+    if (result.reason === "unavailable") {
+      // server misconfiguration, not the user's fault — don't count it
+      return NextResponse.json({ error: result.detail }, { status: 503 });
+    }
     recordFailure(key);
-    return NextResponse.json({ error: "Incorrect password." }, { status: 401 });
+    // same message whether the user doesn't exist, isn't allowed, or typed
+    // the wrong password, so the form can't be used to probe accounts
+    return NextResponse.json({ error: "Incorrect username or password." }, { status: 401 });
   }
 
   resetRateLimit(key);
 
-  const response = NextResponse.json({ ok: true });
-  response.cookies.set(SESSION_COOKIE, createSessionCookieValue(), {
+  const response = NextResponse.json({ ok: true, user: result.user });
+  response.cookies.set(SESSION_COOKIE, createSessionCookieValue(result.user), {
     httpOnly: true,
+    // Secure whenever the browser reached us over https (directly or via nginx)
+    secure:
+      request.headers.get("x-forwarded-proto") === "https" ||
+      new URL(request.url).protocol === "https:",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: SESSION_TTL_MS / 1000,
   });
   return response;
 }

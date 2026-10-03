@@ -1,52 +1,51 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
-export const SESSION_COOKIE = "admin_session";
-const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+// Signed session cookies. A session is "<expiresAt>.<username>.<hmac>", where
+// the HMAC (keyed by SESSION_SECRET) covers both the expiry and the user, so
+// neither can be edited client-side. Logins themselves are checked against
+// the machine's own accounts — see systemAuth.ts.
 
-function adminPassword(): string {
-  const value = process.env.ADMIN_PASSWORD;
-  if (!value) {
-    throw new Error("ADMIN_PASSWORD is not set");
+export const SESSION_COOKIE = "admin_session";
+export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function signingSecret(): string {
+  const value = process.env.SESSION_SECRET;
+  if (!value || value.length < 16) {
+    throw new Error(
+      "SESSION_SECRET is not set (or shorter than 16 characters) — generate one with `openssl rand -hex 32`",
+    );
   }
   return value;
 }
 
-// Key used to sign session cookies. Kept separate from ADMIN_PASSWORD so a
-// short/simple admin password can't be brute-forced into forging sessions.
-// Falls back to ADMIN_PASSWORD only if SESSION_SECRET is unset.
-function signingSecret(): string {
-  return process.env.SESSION_SECRET || adminPassword();
-}
-
-function sign(expiresAt: number): string {
+function sign(expiresAt: number, user: string): string {
   return createHmac("sha256", signingSecret())
-    .update(String(expiresAt))
+    .update(`${expiresAt}.${user}`)
     .digest("hex");
 }
 
-export function createSessionCookieValue(): string {
+export function createSessionCookieValue(user: string): string {
   const expiresAt = Date.now() + SESSION_TTL_MS;
-  return `${expiresAt}.${sign(expiresAt)}`;
+  return `${expiresAt}.${user}.${sign(expiresAt, user)}`;
+}
+
+/** The logged-in username, or null if the cookie is missing, expired or forged. */
+export function sessionUser(value: string | undefined): string | null {
+  if (!value) return null;
+  const parts = value.split(".");
+  if (parts.length !== 3) return null;
+  const [expiresAtRaw, user, signature] = parts;
+  const expiresAt = Number(expiresAtRaw);
+  if (!expiresAtRaw || !user || !signature || Number.isNaN(expiresAt)) return null;
+  if (Date.now() > expiresAt) return null;
+
+  const a = Buffer.from(signature);
+  const b = Buffer.from(sign(expiresAt, user));
+  return a.length === b.length && timingSafeEqual(a, b) ? user : null;
 }
 
 export function isValidSessionCookieValue(value: string | undefined): boolean {
-  if (!value) return false;
-  const [expiresAtRaw, signature] = value.split(".");
-  const expiresAt = Number(expiresAtRaw);
-  if (!expiresAtRaw || !signature || Number.isNaN(expiresAt)) return false;
-  if (Date.now() > expiresAt) return false;
-
-  const expected = sign(expiresAt);
-  const a = Buffer.from(signature);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
-export function checkPassword(candidate: string): boolean {
-  const expected = adminPassword();
-  const a = Buffer.from(candidate);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
+  return sessionUser(value) !== null;
 }
 
 // byjohnmichael*

@@ -7,6 +7,7 @@ import { motion } from "motion/react";
 const TABS = [
   { href: "/", label: "overview" },
   { href: "/performance", label: "performance" },
+  { href: "/monitor", label: "monitor" },
   { href: "/mc", label: "minecraft" },
   { href: "/wow", label: "wow" },
 ];
@@ -15,7 +16,7 @@ export default function NavTabs() {
   const pathname = usePathname();
 
   return (
-    <nav className="-mx-2 flex gap-0.5 overflow-x-auto whitespace-nowrap sm:mx-0 sm:gap-1">
+    <nav className="-mx-2 flex gap-0.5 overflow-x-auto whitespace-nowrap sm:gap-1">
       {TABS.map((tab) => {
         const active =
           tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
