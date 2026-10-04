@@ -5,6 +5,7 @@
 // to a terminal on purpose.
 
 import { useCallback, useEffect, useState } from "react";
+import { useCachedState } from "@/lib/useCachedState";
 import type { PackagesStatus, UpdateSeverity } from "@/lib/packages";
 
 const POLL_MS = 5 * 60_000;
@@ -26,7 +27,7 @@ function ago(iso: string | number | null): string {
 }
 
 export default function PackagesPanel({ className = "" }: { className?: string }) {
-  const [data, setData] = useState<PackagesStatus | null>(null);
+  const [data, setData] = useCachedState<PackagesStatus | null>("packages:data", null);
   const [checking, setChecking] = useState(false);
   const [query, setQuery] = useState("");
 

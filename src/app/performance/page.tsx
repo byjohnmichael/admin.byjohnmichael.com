@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useCachedState } from "@/lib/useCachedState";
 import { HtopMeter, SegMeter, Spinner } from "@/components/term";
 import { HoverSparkline } from "@/components/perf/DotGraph";
 import type {
@@ -558,7 +559,7 @@ function CpuOrb({
 /* ------------------------------------------------------------------ page */
 
 export default function PerformancePage() {
-  const [data, setData] = useState<PerfResponse | null>(null);
+  const [data, setData] = useCachedState<PerfResponse | null>("perf:data", null);
   const [failed, setFailed] = useState(false);
   const [orbWord, setOrbWord] = useState("idle");
   const orbDwell = useRef({ cand: "idle", since: 0 });
@@ -574,7 +575,7 @@ export default function PerformancePage() {
   const netDwell = useRef({ cand: "idle", since: 0 });
   const [osWord, setOsWord] = useState("idle");
   const osDwell = useRef({ cand: "idle", since: 0 });
-  const [servers, setServers] = useState<PerfServer[]>([]);
+  const [servers, setServers] = useCachedState<PerfServer[]>("perf:servers", []);
   const [srvBusy, setSrvBusy] = useState<string | null>(null);
   const [procSort, setProcSort] = useState<{
     key: "rss" | "cpu" | "pid" | "name" | "user";
@@ -583,7 +584,7 @@ export default function PerformancePage() {
   const [killBusy, setKillBusy] = useState<number | null>(null);
   const [procsExpanded, setProcsExpanded] = useState(false);
   const [procQuery, setProcQuery] = useState("");
-  const [allProcs, setAllProcs] = useState<Snapshot["procs"]>([]);
+  const [allProcs, setAllProcs] = useCachedState<Snapshot["procs"]>("perf:procs", []);
 
   const loadAllProcs = useCallback(() => {
     fetch("/api/system/processes")
