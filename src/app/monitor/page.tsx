@@ -6,6 +6,7 @@
 // from the same /api/performance poll the floating Bob uses.
 
 import { useEffect, useState } from "react";
+import { useCachedState } from "@/lib/useCachedState";
 import { HoverSparkline } from "@/components/perf/DotGraph";
 import { HtopMeter, Spinner } from "@/components/term";
 import { Ring } from "@/components/charts/ring";
@@ -158,7 +159,7 @@ function ServerRow({
 
 export default function MonitorPage() {
   const perf = usePerf();
-  const [servers, setServers] = useState<ServerStatus | null>(null);
+  const [servers, setServers] = useCachedState<ServerStatus | null>("monitor:servers", null);
   const [ringHover, setRingHover] = useState<number | null>(null);
 
   useEffect(() => {

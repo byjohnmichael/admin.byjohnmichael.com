@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useCachedState } from "@/lib/useCachedState";
 
 type AccountRequest = {
   id: string;
@@ -28,11 +29,11 @@ function formatDate(iso: string): string {
 }
 
 export default function WowPage() {
-  const [requests, setRequests] = useState<AccountRequest[]>([]);
-  const [characters, setCharacters] = useState<WowCharacter[]>([]);
+  const [requests, setRequests] = useCachedState<AccountRequest[]>("wow:requests", []);
+  const [characters, setCharacters] = useCachedState<WowCharacter[]>("wow:characters", []);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useCachedState("wow:loading", true);
 
   const loadRequests = useCallback(async () => {
     const res = await fetch("/api/wow/accounts");

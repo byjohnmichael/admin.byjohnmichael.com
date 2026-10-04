@@ -4,6 +4,7 @@
 // and the backup snapshot list. Moved here from the Performance page.
 
 import { useCallback, useEffect, useState } from "react";
+import { useCachedState } from "@/lib/useCachedState";
 import { HoverSparkline } from "@/components/perf/DotGraph";
 import type {
   BackupSnapshot,
@@ -55,12 +56,12 @@ function BackupTable({
 
 
 export default function McServerPanel() {
-  const [mcPerf, setMcPerf] = useState<McPerfResponse | null>(null);
+  const [mcPerf, setMcPerf] = useCachedState<McPerfResponse | null>("mc:perf", null);
   const [sparkBusy, setSparkBusy] = useState<SparkAction | null>(null);
   const [sparkResult, setSparkResult] = useState<
     Record<SparkAction, { url?: string; error?: string }>
   >({ health: {}, flamegraph: {} });
-  const [backups, setBackups] = useState<BackupsResponse | null>(null);
+  const [backups, setBackups] = useCachedState<BackupsResponse | null>("mc:backups", null);
 
   useEffect(() => {
     let cancelled = false;

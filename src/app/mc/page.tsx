@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCachedState } from "@/lib/useCachedState";
 import McServerPanel from "@/components/mc/McServerPanel";
 
 const USERNAME_PATTERN = /^[A-Za-z0-9_]{3,16}$/;
@@ -138,29 +139,29 @@ function formatBytes(bytes: number): string {
 }
 
 export default function McPage() {
-  const [players, setPlayers] = useState<Player[] | null>(null);
-  const [requests, setRequests] = useState<WhitelistRequest[] | null>(null);
+  const [players, setPlayers] = useCachedState<Player[] | null>("mc:players", null);
+  const [requests, setRequests] = useCachedState<WhitelistRequest[] | null>("mc:requests", null);
   const [busy, setBusy] = useState<string | null>(null);
   const [quickAddUsername, setQuickAddUsername] = useState("");
   const [quickAddMessage, setQuickAddMessage] = useState("");
   const [requestMessage, setRequestMessage] = useState("");
-  const [markers, setMarkers] = useState<Marker[] | null>(null);
-  const [markersDirty, setMarkersDirty] = useState(false);
+  const [markers, setMarkers] = useCachedState<Marker[] | null>("mc:markers", null);
+  const [markersDirty, setMarkersDirty] = useCachedState("mc:markersDirty", false);
   const [markerForm, setMarkerForm] = useState(BLANK_MARKER_FORM);
   const [markerMessage, setMarkerMessage] = useState("");
   const [editingMarkerId, setEditingMarkerId] = useState<string | null>(null);
   const [markerEditDraft, setMarkerEditDraft] = useState<MarkerDraft | null>(
     null,
   );
-  const [locationRequests, setLocationRequests] = useState<
+  const [locationRequests, setLocationRequests] = useCachedState<
     LocationRequest[] | null
-  >(null);
+  >("mc:locationRequests", null);
   const [locationDrafts, setLocationDrafts] = useState<
     Record<string, LocationDraft>
   >({});
   const [locationMessage, setLocationMessage] = useState("");
-  const [trailers, setTrailers] = useState<Trailer[] | null>(null);
-  const [nextEpisode, setNextEpisode] = useState<number | null>(null);
+  const [trailers, setTrailers] = useCachedState<Trailer[] | null>("mc:trailers", null);
+  const [nextEpisode, setNextEpisode] = useCachedState<number | null>("mc:nextEpisode", null);
   const [episodeOverride, setEpisodeOverride] = useState("");
   const [trailerMessage, setTrailerMessage] = useState("");
   const [uploading, setUploading] = useState(false);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useCachedState } from "@/lib/useCachedState";
 import Link from "next/link";
 import { CountUp, SegMeter } from "@/components/term";
 import PackagesPanel from "@/components/PackagesPanel";
@@ -334,7 +335,7 @@ function ServiceRow({
 }
 
 export default function GeneralPage() {
-  const [data, setData] = useState<Summary | null>(null);
+  const [data, setData] = useCachedState<Summary | null>("overview:data", null);
   const [error, setError] = useState(false);
   const [rebootArmed, setRebootArmed] = useState(false);
   const [rebootState, setRebootState] = useState<

@@ -958,3 +958,20 @@ main .panel {
 }
 
 /* byjohnmichael* */
+
+/* ------------------------------------------------------------- idle lock */
+
+/* Covers everything once the panel locks: the live dashboards stay visible
+   behind it, just blurred and dimmed. */
+.idle-lock {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--bg, #0a080c) 70%, transparent);
+  backdrop-filter: blur(14px) saturate(0.8);
+  -webkit-backdrop-filter: blur(14px) saturate(0.8);
+}

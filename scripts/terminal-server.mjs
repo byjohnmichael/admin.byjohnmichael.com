@@ -13,6 +13,8 @@
 import { createServer } from "node:http";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { homedir } from "node:os";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { WebSocketServer } from "ws";
 import pty from "node-pty";
 
@@ -35,19 +37,31 @@ if (!SECRET || SECRET.length < 16) {
   process.exit(1);
 }
 
-// Same format and signature as src/lib/auth.ts: "<expiresAt>.<user>.<hmac>".
-function sessionUser(value) {
+// Same format and signature as src/lib/auth.ts: "<expiresAt>.<user>.<sid>.<hmac>".
+// Returns { user, sid } or null.
+function parseSession(value) {
   if (!value) return null;
   const parts = value.split(".");
-  if (parts.length !== 3) return null;
-  const [expiresAtRaw, user, signature] = parts;
+  if (parts.length !== 4) return null;
+  const [expiresAtRaw, user, sid, signature] = parts;
   const expiresAt = Number(expiresAtRaw);
-  if (!expiresAtRaw || !user || !signature || Number.isNaN(expiresAt)) return null;
+  if (!expiresAtRaw || !user || !sid || !signature || Number.isNaN(expiresAt)) return null;
   if (Date.now() > expiresAt) return null;
-  const expected = createHmac("sha256", SECRET).update(`${expiresAt}.${user}`).digest("hex");
+  const expected = createHmac("sha256", SECRET).update(`${expiresAt}.${user}.${sid}`).digest("hex");
   const a = Buffer.from(signature);
   const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b) ? user : null;
+  return a.length === b.length && timingSafeEqual(a, b) ? { user, sid } : null;
+}
+
+// Screen-lock state shared with the site (src/lib/sessionLock.ts): a locked
+// session may not open a shell or type into one it already has open.
+const LOCK_FILE = resolve(process.env.SESSION_LOCK_FILE ?? ".session-locks.json");
+function isLocked(sid) {
+  try {
+    return sid in JSON.parse(readFileSync(LOCK_FILE, "utf8"));
+  } catch {
+    return false;
+  }
 }
 
 function readCookie(header, name) {
@@ -86,18 +100,19 @@ server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url ?? "/", "http://localhost");
   if (url.pathname !== PATH) return reject(404, "Not Found");
   if (!ORIGINS.includes(req.headers.origin ?? "")) return reject(403, "Forbidden");
-  const user = sessionUser(readCookie(req.headers.cookie, SESSION_COOKIE));
-  if (!user) return reject(401, "Unauthorized");
+  const session = parseSession(readCookie(req.headers.cookie, SESSION_COOKIE));
+  if (!session) return reject(401, "Unauthorized");
+  if (isLocked(session.sid)) return reject(423, "Locked");
   if (wss.clients.size >= MAX_SESSIONS) return reject(429, "Too Many Requests");
 
   wss.handleUpgrade(req, socket, head, (ws) => {
     const cols = clamp(Number(url.searchParams.get("cols")), 10, 500, 80);
     const rows = clamp(Number(url.searchParams.get("rows")), 4, 200, 24);
-    startSession(ws, user, cols, rows);
+    startSession(ws, session, cols, rows);
   });
 });
 
-function startSession(ws, user, cols, rows) {
+function startSession(ws, { user, sid }, cols, rows) {
   let shell;
   try {
     shell = pty.spawn(SHELL, ["-l"], { name: "xterm-256color", cols, rows, cwd: CWD, env: shellEnv() });
@@ -124,6 +139,7 @@ function startSession(ws, user, cols, rows) {
       return;
     }
     if (msg?.type === "input" && typeof msg.data === "string") {
+      if (isLocked(sid)) return; // screen locked: output keeps flowing, input doesn't
       shell.write(msg.data);
     } else if (msg?.type === "resize") {
       shell.resize(clamp(msg.cols, 10, 500, cols), clamp(msg.rows, 4, 200, rows));
