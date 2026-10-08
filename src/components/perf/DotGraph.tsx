@@ -32,6 +32,7 @@ export function HoverSparkline({
   max3: max3Prop,
   fillSecond = true,
   mirror = false,
+  fmtTime,
 }: {
   points: { t: number; v: number }[];
   /** optional second series: a subset inside series 1, or mirrored below it */
@@ -57,6 +58,8 @@ export function HoverSparkline({
   fillSecond?: boolean;
   /** draw series 2 downward from a centre line instead of inside series 1 */
   mirror?: boolean;
+  /** formats the hover timestamp; defaults to time-of-day (live graphs) */
+  fmtTime?: (t: number) => string;
 }) {
   const [hi, setHi] = useState<number | null>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
@@ -231,7 +234,7 @@ export function HoverSparkline({
           ) : (
             <>{fmt(hp.v)} · </>
           )}
-          {new Date(hp.t).toLocaleTimeString()}
+          {fmtTime ? fmtTime(hp.t) : new Date(hp.t).toLocaleTimeString()}
         </div>
       )}
     </div>

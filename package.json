@@ -16,6 +16,7 @@
     "@visx/shape": "^4.0.1-alpha.0",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/xterm": "^6.0.0",
+    "better-sqlite3": "^12.11.1",
     "bob-the-orb": "github:byjohnmichael/bob-the-orb",
     "clsx": "^2.1.1",
     "motion": "^12.43.0",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
