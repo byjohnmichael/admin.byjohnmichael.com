@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useCachedState } from "@/lib/useCachedState";
 import { HtopMeter, SegMeter, Spinner } from "@/components/term";
 import { HoverSparkline } from "@/components/perf/DotGraph";
+import PerfHistory from "@/components/perf/PerfHistory";
 import type {
   CpuLane,
   MemSlot,
@@ -558,7 +559,7 @@ function CpuOrb({
 
 /* ------------------------------------------------------------------ page */
 
-export default function PerformancePage() {
+function CurrentView() {
   const [data, setData] = useCachedState<PerfResponse | null>("perf:data", null);
   const [failed, setFailed] = useState(false);
   const [orbWord, setOrbWord] = useState("idle");
@@ -2017,6 +2018,32 @@ export default function PerformancePage() {
           sampler: {data.error}
         </p>
       )}
+    </div>
+  );
+}
+
+export default function PerformancePage() {
+  const [mode, setMode] = useCachedState<"current" | "historical">(
+    "perf:mode",
+    "current",
+  );
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex gap-2" role="tablist" aria-label="Performance view">
+        {(["current", "historical"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            role="tab"
+            aria-selected={mode === m}
+            onClick={() => setMode(m)}
+            className={`btn ${mode === m ? "" : "btn-ghost"}`}
+          >
+            {m === "current" ? "Current" : "Historical"}
+          </button>
+        ))}
+      </div>
+      {mode === "current" ? <CurrentView /> : <PerfHistory />}
     </div>
   );
 }

@@ -42,3 +42,6 @@ next-env.d.ts
 
 # idle screen-lock state
 .session-locks.json
+
+# perf history database
+/admin-site-data/

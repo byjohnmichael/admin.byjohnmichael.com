@@ -5,6 +5,7 @@ import os from "os";
 import path from "path";
 import { getSpecs } from "@/lib/specs";
 import { readAmdGpus } from "@/lib/amdGpu";
+import { recordSnapshot } from "@/lib/perfHistory";
 
 const execFileAsync = promisify(execFile);
 
@@ -1696,8 +1697,10 @@ async function tick(): Promise<void> {
     }
     const raw = await readRaw();
     if (state.prev) {
-      state.history.push(computeSnapshot(state.prev, raw));
+      const snap = computeSnapshot(state.prev, raw);
+      state.history.push(snap);
       if (state.history.length > HISTORY_MAX) state.history.shift();
+      recordSnapshot(snap);
     }
     state.prev = raw;
     state.tick++;
@@ -1709,7 +1712,7 @@ async function tick(): Promise<void> {
   }
 }
 
-function ensureSampler(): void {
+export function ensureSampler(): void {
   startPerfLoop();
   if (state.timer) return;
   const timer = setInterval(tick, TICK_MS);
